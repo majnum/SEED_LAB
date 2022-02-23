@@ -1,10 +1,10 @@
 
 // A program that reads the direction of two Encoders and calculates movement. 
-// By Joey Thurman 2/18/2022
+// By Joey Thurman 2/23/2022
 
 #define r 0.05 
 #define b 0.1
-#define rot 16
+#define rot 3200
 #define CLK 2
 #define DT 4
 #define CLK2 3
@@ -49,18 +49,13 @@ void setup() {
 void loop() {
       
       //Print the movement When their is new encoder data.
-      while(data == 0);
-
+      
       theta_r = (float) ang_right*rot / (2*pi); 
       theta_l = (float) ang_left*rot / (2*pi); 
 
-      Serial.print(theta_l);
-      Serial.print("\t");
-      Serial.print(theta_r);
-      Serial.print("\r\n");
+       
       
       
-     data = 0; 
       
 }
 
@@ -92,7 +87,7 @@ void  rotate_r(){
     
   }
 
-  data = 1;
+  
 
 }
       
@@ -120,6 +115,6 @@ void  rotate_l(){
     
   }
 
-    data = 1;
+   
  
 }
