@@ -48,7 +48,7 @@ def displayRes(setpoint, position):
     lcd.clear()
     # Set LCD color to green
     lcd.color = [0, 100, 0]
-    message = "Setpoint:" + str(setpoint) + "\nPosition:  " + str(position) 
+    message = "Setpoint:" + str(setpoint) + "\nPosition:" + str(position) 
     lcd.message = message
 
 def nothing(x):
@@ -60,6 +60,7 @@ def imgDisp(imgname, img):
     cv.destroyAllWindows()
 
 ##need section turning on picamera, saving awb values, turning off awb
+region = -1
 camera = PiCamera(resolution = (960, 540), framerate=30)
 camera.start_preview()
 camera.iso = 400
@@ -113,7 +114,7 @@ while (1):
     #print('the hexagon is located at x = ', avg[1], ', y = ', avg[0])
     #topLeft, topRight, bottomLeft, bottomRight = 0
     if not np.any(nonZero): #no marker
-        noMarker = 1
+        region = -1
         print('no markers found')
     elif avg[1] < 960/2 and avg[0] < 540/2: #top left
         region = 0
@@ -131,4 +132,4 @@ while (1):
     #Control update rate for rotary and camera    
     for i in range(10):
         displayRes(region, "5")
-        time.sleep(0.3)
+        time.sleep(0.05)
