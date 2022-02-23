@@ -83,6 +83,8 @@ avgAwb = (avgRedAwb, avgBlueAwb)
 camera.awb_mode = 'off'
 camera.awb_gains = avgAwb
 
+     
+number = readNumber(0); 
 
 ##marker detection - use neon pink marker/josh's pencil
 while (1):
@@ -128,8 +130,14 @@ while (1):
     elif avg[1] < 960/2 and avg[0] > 540/2: #bottom left
         region = 3
         print('marker in bottom left')
-        
-    #Control update rate for rotary and camera    
-    for i in range(10):
-        displayRes(region, "5")
-        time.sleep(0.05)
+    
+    #Control update rate for rotary and camera
+     
+    #for i in range(10):
+     #   number = readNumber(0)
+      #  message = ""
+       # for num in number:
+        #       message = message + chr(num)
+        #print(message);        
+        #displayRes(region, "5")
+        #time.sleep(0.05)

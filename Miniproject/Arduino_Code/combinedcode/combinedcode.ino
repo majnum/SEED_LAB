@@ -89,9 +89,14 @@ void sendData(){
   byte data[32] = {};
   //if(read_offset == in_data[0]){
     String val = String(ang_right);
+    Serial.print(val);
     for(int i = 0; i < val.length(); i++){
       data[i] = val[i];
+      if(val[i] != ' '){
+        Serial.print(val[i] + " ");
+      }
   //}
+  Serial.print("\n");
   Wire.write(data, 32);
 }
 }
@@ -103,7 +108,8 @@ void loop() {
       
       theta_r = (float) ang_right*rot / (2*pi); 
       theta_l = (float) ang_left*rot / (2*pi); 
-
+      //Serial.print(theta_r);
+      //Serial.print(" \n");
        
       
       
