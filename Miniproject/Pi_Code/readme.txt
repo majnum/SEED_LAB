@@ -1,1 +1,1 @@
-Miniproject Arduino readme
+Miniproject Pi readme
