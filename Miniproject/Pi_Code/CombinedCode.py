@@ -43,6 +43,14 @@ def displayReset():
 #Initially reset display
 displayReset()
 
+#Displays setpoint and position on LCD
+def displayRes(setpoint, position):
+    lcd.clear()
+    # Set LCD color to green
+    lcd.color = [0, 100, 0]
+    message = "Setpoint:" + str(setpoint) + "\nPosition:  " + str(position) 
+    lcd.message = message
+
 def nothing(x):
     pass
 
@@ -120,4 +128,7 @@ while (1):
         region = 3
         print('marker in bottom left')
         
-    time.sleep(3)
+    #Control update rate for rotary and camera    
+    for i in range(10):
+        displayRes(region, "5")
+        time.sleep(0.3)
