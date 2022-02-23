@@ -13,7 +13,7 @@
 void setup() {
 
   pinMode(TriStatePin, OUTPUT); 
-  analogWrite(TriStatePin, HIGH); 
+  analogWrite(TriStatePin, 255); 
 
   pinMode(Motor1VoltControlPin, OUTPUT);
   pinMode(Motor1DirControlPin, OUTPUT);
@@ -29,7 +29,7 @@ void loop() {
 
   static int motorVolt;
   motorVolt = (motorVolt + 32) % 256;
-  int direct = 0;
+  int direct = 255;
 
   analogWrite(Motor1DirControlPin, direct); 
   
