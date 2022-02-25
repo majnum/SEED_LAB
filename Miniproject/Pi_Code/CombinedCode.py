@@ -136,7 +136,15 @@ while (1):
         vals.append(region)
         writeNumber(vals, 0)
     displayRes(region, "5")
-   
+    
+    number = readNumber(0)
+    message = ""
+    for num in number:
+        if num != 0:
+            message = message + chr(num)
+            
+    print(message)
+    
     time.sleep(2)
     #cv.imshow('combined image', combinedImage)
     #cv.waitKey(3000)

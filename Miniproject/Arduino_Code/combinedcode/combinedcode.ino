@@ -109,6 +109,22 @@ void receiveData(int byteCount){
 }
 
 void sendData(){
+  static byte data[32] = {};
+  for(int i = 0; i < 32; i++){
+    data[i] = 0;
+  }
+  Serial.println(ang_right);
+  String start_val = String(ang_right);
+  for(int i = 0; i < start_val.length(); i++){
+    data[i] = (int)start_val[i];
+  }
+  //delay(200);
+  Wire.write(data, 32);
+  
+}
+
+/*
+void sendData(){
   byte data[32] = {};
   //if(read_offset == in_data[0]){
     String val = String(ang_right);
@@ -123,6 +139,7 @@ void sendData(){
   Wire.write(data, 32);
 }
 }
+*/
 
 // the loop function runs over and over again forever
 void loop() {
