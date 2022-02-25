@@ -131,9 +131,17 @@ while (1):
         region = 3
         print('marker in bottom left')
     
-    cv.imshow('combined image', combinedImage)
-    cv.waitkey(3000)
-    cv.destroyAllWindows()
+    vals = []
+    if region != -1:
+        vals.append(region)
+        writeNumber(vals, 0)
+    displayRes(region, "5")
+   
+    time.sleep(2)
+    #cv.imshow('combined image', combinedImage)
+    #cv.waitKey(3000)
+    #cv.destroyAllWindows()
+    
     
     #Control update rate for rotary and camera
      

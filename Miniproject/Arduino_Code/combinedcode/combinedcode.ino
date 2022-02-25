@@ -95,15 +95,16 @@ void receiveData(int byteCount){
       //Serial.print(' ');
       i++;
     }
-    //Serial.print(' ');
+    //Serial.print('\n');
     i--;
     len = i;
   }
   else{
     read_offset = Wire.read();
   }
-  desired_angle = in_data[1];
- 
+  
+  given = in_data[1] * 75;
+  Serial.println(given);
   
 }
 
@@ -111,14 +112,14 @@ void sendData(){
   byte data[32] = {};
   //if(read_offset == in_data[0]){
     String val = String(ang_right);
-    Serial.print(val);
+    //Serial.print(val);
     for(int i = 0; i < val.length(); i++){
       data[i] = val[i];
       if(val[i] != ' '){
-        Serial.print(val[i] + " ");
+        //Serial.print(val[i] + " ");
       }
   //}
-  Serial.print("\n");
+  //Serial.print("\n");
   Wire.write(data, 32);
 }
 }
@@ -139,7 +140,7 @@ void loop() {
     long int newPosition = ang_right;
     if (newPosition != oldPosition) {
     oldPosition = newPosition;
-    Serial.println(newPosition);
+    //Serial.println(newPosition);
     }
 
      //integral calculation
@@ -182,7 +183,7 @@ void loop() {
 //    if (abs(newPosition - given) < intThreshholdCounts) {
 //      integral += (double)abs(newPosition - given) * 0.05;
 //    }
-    Serial.println((double)newPosition * (PI / 1600.0));
+    //Serial.println((double)newPosition * (PI / 1600.0));
     }
 
     while (millis() < currentTime + 50); //timer for consistency of next control input calculation - 50ms
