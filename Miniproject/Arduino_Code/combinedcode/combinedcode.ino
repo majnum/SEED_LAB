@@ -14,7 +14,7 @@ int desired_angle = -1;
 
 #define r 0.05 
 #define b 0.1
-#define rot 3200
+#define rot 800
 #define CLK 2
 #define DT 4
 #define CLK2 3
@@ -33,23 +33,23 @@ volatile long int ang_left = 0;
 volatile int time_l = 0;
 volatile int time_r = 0; 
 
-volatile float theta_r;
-volatile float theta_l;
+volatile double theta_r;
+volatile double theta_l;
 
 
 //Control Variables
 
 volatile long int oldPosition  = 0;
 
-volatile double Kp = 0.5;
+volatile double Kp =  20 ;
 
-volatile long int given = 800;
+volatile double given = PI / (double)2;
 
 volatile int directionsign = 0;
 
-volatile double Ki = 0;
+volatile double Ki = .7;
 
-volatile double Kd = 0.1;
+volatile double Kd =0;
 
 volatile unsigned long currentTime = 0;
 
@@ -59,9 +59,9 @@ volatile double analog;
 
 volatile int closeEnough = 10;
 
-volatile long int newPosition;
+volatile double newPosition;
 
-volatile int delta =0;
+volatile double delta = 0;
 
 void setup() {
   //Enable serial communication
@@ -74,7 +74,7 @@ void setup() {
   //define callabcks for i2c communication
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
-  Serial.println("Ready!");
+  //Serial.println("Ready!");
 // initialize digital pin 
 
   pinMode(CLK, INPUT_PULLUP);
@@ -140,41 +140,45 @@ void loop() {
       
       //Print the movement When their is new encoder data.
       
-      theta_r = (float) ang_right*rot / (2*pi); 
-      theta_l = (float) ang_left*rot / (2*pi); 
-      //Serial.print(theta_r);
+      theta_r = (double) ang_right*(2*pi) / (double) rot; 
+      theta_l = (double) ang_left*(2*pi) / (double) 
+      rot; 
+      Serial.print(theta_r);
       //Serial.print(" \n");
 
 
 //Control Code *****************************************************************************
     currentTime = millis();
-    static long int newPosition = 0;
+    static double newPosition = 0;
     static double deriv = 0; 
 
-    newPosition = ang_right;
+    newPosition = theta_r;
     delta = given - newPosition;
 
+    Serial.print("\t");
+    Serial.println(delta);
+
      //integral calculation
-//     if (abs(newPosition - given) < intThreshholdCounts) {
-      integral += (double)(delta) * 0.01 * Ki;
+//     if (abs(newPosition - given) < ) {
+      integral = integral + (double)(delta) * 0.01;
       
 //    }
 //    if (abs(newPosition - given) > intThreshholdCounts) {
-    integral = 0; //zero out the integral when we're close enough to desired position
+ //   integral = 0; //zero out the integral when we're close enough to desired position
 //    
    
     
-   deriv = Kd*((double)(newPosition - oldPosition)*100);
+   //deriv = Kd*((double)(newPosition - oldPosition)*100);
 
        
    
     //in_data[0] = newPosition / 20;
     
-    analog = (delta*Kp + deriv+ integral); //movement speed of motor
+    analog = (delta*Kp + integral* Ki); //movement speed of motor
     if (analog < 0) {
-      directionsign = 255;
+      digitalWrite(Motor1DirControlPin,HIGH);
     }else{
-      directionsign = 0;
+      digitalWrite(Motor1DirControlPin,LOW);
     }
     analog = abs(analog);
     if (analog > 255) {
@@ -183,9 +187,24 @@ void loop() {
     if (analog < 0) {
       analog = 0;
     }
+
+    if(abs(delta) < .01 ){
+      analog = 0;
+      integral = 0; 
+      analogWrite(Motor1VoltControlPin, analog);
+    }else if (delta > 0){
+      digitalWrite(Motor1DirControlPin,LOW);
+      analogWrite(Motor1VoltControlPin, analog);
+
+    } else if (delta < 0){
+      digitalWrite(Motor1DirControlPin,HIGH);
+      analogWrite(Motor1VoltControlPin, analog);
+
+    }
+    
     
     analogWrite(Motor1VoltControlPin, analog);
-    analogWrite(Motor1DirControlPin,directionsign);
+   
     
 //    
 //    if (abs(newPosition - given) < intThreshholdCounts) {
@@ -193,7 +212,6 @@ void loop() {
 //    }
     //Serial.println((double)newPosition * (PI / 1600.0));
     
-    oldPosition = newPosition;
     while (millis() < currentTime + 10); //timer for consistency of next control input calculation - 10ms
 }
 
