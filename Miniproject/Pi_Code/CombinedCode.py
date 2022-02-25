@@ -143,7 +143,9 @@ while (1):
         if num != 0:
             message = message + chr(num)
             
-    print(message)
+    val = int(message) * 0.020943951
+    pos = str(val)
+    displayRes(region, pos)
     
     time.sleep(2)
     #cv.imshow('combined image', combinedImage)
