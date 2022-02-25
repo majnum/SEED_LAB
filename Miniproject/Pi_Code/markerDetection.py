@@ -2,6 +2,7 @@ from picamera import PiCamera
 import cv2 as cv
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
 def nothing(x):
     pass
@@ -56,34 +57,34 @@ while (1):
     #        cv.imshow('calibration', imgOut)
     #    except:
     #        pass
-            
-        #reading trackbar values
+    #        
+    #    #reading trackbar values
     #    hUp = cv.getTrackbarPos('H upper', 'calibration')
     #    hLow = cv.getTrackbarPos('H lower', 'calibration')
     #    sUp = cv.getTrackbarPos('S upper', 'calibration')
     #    sLow = cv.getTrackbarPos('S lower', 'calibration')
     #    vUp = cv.getTrackbarPos('V upper', 'calibration')
     #    vLow = cv.getTrackbarPos('V lower', 'calibration')
-        
-        #setting color recognition boundaries from trackbars
+    #    
+    #    #setting color recognition boundaries from trackbars
     #    lowerBound = (hLow, sLow, vLow)
     #    upperBound = (hUp, sUp, vUp)
-        #creating mask based on bounds
+    #    #creating mask based on bounds
     #    maskY = cv.inRange(img2, lowerBound, upperBound)
-        #and mask with og image to isolate color range selected
+    #    #and mask with og image to isolate color range selected
     #    imgOut = cv.bitwise_and(img, img, mask = maskY)
-        #cv.imwrite('imgOut.jpg', imgOut)
-        
+    #    #cv.imwrite('imgOut.jpg', imgOut)
+    #    
     #    k = cv.waitKey(1) & 0xFF
     #    if k == 27:
     #        break
-        
+    #    
     #cv.destroyAllWindows()
 
 
     #hsv bounds
-    lowerBound = (51, 99, 99)
-    upperBound = (82, 255, 255)
+    lowerBound = (51, 95, 60)
+    upperBound = (85, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
 
@@ -97,7 +98,7 @@ while (1):
     ret, imgThresh = cv.threshold(imgGray, 40, 255, cv.THRESH_BINARY)
     nonZero = imgThresh.nonzero()
     avg = np.mean(nonZero, axis = 1)
-
+    combinedImage = np.concatenate((img, closing), axis = 1)
 
     #finding which region
     #print('the hexagon is located at x = ', avg[1], ', y = ', avg[0])
@@ -118,7 +119,11 @@ while (1):
         region = 3
         print('marker in bottom left')
         
-    time.sleep(3)
+        
+    cv.imshow('combined image', combinedImage)
+    cv.waitKey(3000)
+    cv.destroyAllWindows()
+    
     
             
         

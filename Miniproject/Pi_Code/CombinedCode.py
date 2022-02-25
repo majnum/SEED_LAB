@@ -95,8 +95,8 @@ while (1):
 
 
     #hsv bounds
-    lowerBound = (51, 99, 99)
-    upperBound = (82, 255, 255)
+    lowerBound = (50, 95, 60)
+    upperBound = (85, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
 
@@ -110,7 +110,7 @@ while (1):
     ret, imgThresh = cv.threshold(imgGray, 40, 255, cv.THRESH_BINARY)
     nonZero = imgThresh.nonzero()
     avg = np.mean(nonZero, axis = 1)
-
+    combinedImage = np.concatenate((img, closing), axis = 1)
 
     #finding which region
     #print('the hexagon is located at x = ', avg[1], ', y = ', avg[0])
@@ -130,6 +130,10 @@ while (1):
     elif avg[1] < 960/2 and avg[0] > 540/2: #bottom left
         region = 3
         print('marker in bottom left')
+    
+    cv.imshow('combined image', combinedImage)
+    cv.waitkey(3000)
+    cv.destroyAllWindows()
     
     #Control update rate for rotary and camera
      
