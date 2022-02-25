@@ -123,24 +123,6 @@ void sendData(){
   
 }
 
-/*
-void sendData(){
-  byte data[32] = {};
-  //if(read_offset == in_data[0]){
-    String val = String(ang_right);
-    //Serial.print(val);
-    for(int i = 0; i < val.length(); i++){
-      data[i] = val[i];
-      if(val[i] != ' '){
-        //Serial.print(val[i] + " ");
-      }
-  //}
-  //Serial.print("\n");
-  Wire.write(data, 32);
-}
-}
-*/
-
 // the loop function runs over and over again forever
 void loop() {
       

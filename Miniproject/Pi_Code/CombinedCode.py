@@ -135,7 +135,6 @@ while (1):
     if region != -1:
         vals.append(region)
         writeNumber(vals, 0)
-    displayRes(region, "5")
     
     number = readNumber(0)
     message = ""
