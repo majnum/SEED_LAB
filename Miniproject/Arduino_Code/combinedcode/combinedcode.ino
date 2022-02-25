@@ -14,7 +14,7 @@ int desired_angle = -1;
 
 #define r 0.05 
 #define b 0.1
-#define rot 1560
+#define rot 3200
 #define CLK 2
 #define DT 4
 #define CLK2 3
@@ -38,18 +38,30 @@ volatile float theta_l;
 
 
 //Control Variables
-long int oldPosition  = 0;
-double Kp = 50;
-int given = 800;
-int directionsign = 0;
-double Ki = 0.03;
-double Kd = 0.0334;
-unsigned long currentTime = 0;
-double integral = 0;
-double analog;
-int closeEnough = 10;
-long int newPosition;
-int delta =0;
+
+volatile long int oldPosition  = 0;
+
+volatile double Kp = 0.5;
+
+volatile long int given = 800;
+
+volatile int directionsign = 0;
+
+volatile double Ki = 0;
+
+volatile double Kd = 0.1;
+
+volatile unsigned long currentTime = 0;
+
+volatile double integral = 0;
+
+volatile double analog;
+
+volatile int closeEnough = 10;
+
+volatile long int newPosition;
+
+volatile int delta =0;
 
 void setup() {
   //Enable serial communication
@@ -103,7 +115,7 @@ void receiveData(int byteCount){
     read_offset = Wire.read();
   }
   
-  given = in_data[1] * 75;
+  given = in_data[1] * 380;
   Serial.println(given);
   
 }
@@ -136,33 +148,29 @@ void loop() {
 
 //Control Code *****************************************************************************
     currentTime = millis();
-    long int newPosition = ang_right;
-    if (newPosition != oldPosition) {
-    oldPosition = newPosition;
-    
-    //Serial.println(newPosition);
-    }
-    
+    static long int newPosition = 0;
+    static double deriv = 0; 
+
+    newPosition = ang_right;
     delta = given - newPosition;
 
      //integral calculation
 //     if (abs(newPosition - given) < intThreshholdCounts) {
-      integral += (double)(delta) * 0.05;
+      integral += (double)(delta) * 0.01 * Ki;
+      
 //    }
-//    else if (abs(newPosition - given) > intThreshholdCounts) {
-//    integral = 0; //zero out the integral when we're close enough to desired position
-//    }
+//    if (abs(newPosition - given) > intThreshholdCounts) {
+    integral = 0; //zero out the integral when we're close enough to desired position
+//    
    
     
- 
+   deriv = Kd*((double)(newPosition - oldPosition)*100);
 
        
-    if (newPosition - given < 0 || newPosition - given > 0) {
+   
+    //in_data[0] = newPosition / 20;
     
-    newPosition = ang_right;
-    in_data[0] = newPosition / 20;
-    
-    analog = delta*(Kp + Kd*((double)(newPosition - oldPosition)*0.05) + Ki /(double) integral); //movement speed of motor
+    analog = (delta*Kp + deriv+ integral); //movement speed of motor
     if (analog < 0) {
       directionsign = 255;
     }else{
@@ -184,9 +192,9 @@ void loop() {
 //      integral += (double)abs(newPosition - given) * 0.05;
 //    }
     //Serial.println((double)newPosition * (PI / 1600.0));
-    }
-
-    while (millis() < currentTime + 50); //timer for consistency of next control input calculation - 50ms
+    
+    oldPosition = newPosition;
+    while (millis() < currentTime + 10); //timer for consistency of next control input calculation - 10ms
 }
 
 //When a rising edge on pin 2 is detected check the direction of the Encoder based on previous inputs. 
