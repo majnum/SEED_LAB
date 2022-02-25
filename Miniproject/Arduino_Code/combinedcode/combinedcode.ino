@@ -14,7 +14,7 @@ int desired_angle = -1;
 
 #define r 0.05 
 #define b 0.1
-#define rot 300
+#define rot 1560
 #define CLK 2
 #define DT 4
 #define CLK2 3
@@ -27,8 +27,8 @@ int desired_angle = -1;
 
 
 
-volatile int ang_right = 0; 
-volatile int ang_left = 0;
+volatile long int ang_right = 0; 
+volatile long int ang_left = 0;
 
 volatile int time_l = 0;
 volatile int time_r = 0; 
@@ -39,10 +39,10 @@ volatile float theta_l;
 
 //Control Variables
 long int oldPosition  = 0;
-double Kp = .50;
-int given = 75;
+double Kp = 50;
+int given = 800;
 int directionsign = 0;
-double Ki = 0.019;
+double Ki = 0.03;
 double Kd = 0.0334;
 unsigned long currentTime = 0;
 double integral = 0;
@@ -139,19 +139,20 @@ void loop() {
     long int newPosition = ang_right;
     if (newPosition != oldPosition) {
     oldPosition = newPosition;
+    
     //Serial.println(newPosition);
     }
+    
+    delta = given - newPosition;
 
      //integral calculation
 //     if (abs(newPosition - given) < intThreshholdCounts) {
-      integral += (double)(newPosition-oldPosition) * 0.05;
+      integral += (double)(delta) * 0.05;
 //    }
 //    else if (abs(newPosition - given) > intThreshholdCounts) {
 //    integral = 0; //zero out the integral when we're close enough to desired position
 //    }
-   if (abs(newPosition - given) < closeEnough) {
-    integral = 0;
-    }
+   
     
  
 
@@ -160,8 +161,8 @@ void loop() {
     
     newPosition = ang_right;
     in_data[0] = newPosition / 20;
-    delta = given - newPosition;
-    analog = delta*(Kp + Kd * (double)(newPosition - oldPosition)*20 + integral * Ki); //movement speed of motor
+    
+    analog = delta*(Kp + Kd*((double)(newPosition - oldPosition)*0.05) + Ki /(double) integral); //movement speed of motor
     if (analog < 0) {
       directionsign = 255;
     }else{
@@ -201,7 +202,7 @@ void  rotate_r(){
     
     ang_right += 1; 
 
-    if(ang_right > rot-1){
+    if(ang_right > rot){
       ang_right = 0;
     }
     
@@ -211,7 +212,7 @@ void  rotate_r(){
     ang_right -= 1; 
 
     if(ang_right < 0){
-      ang_right = rot - 1;
+      ang_right = rot -1;
     }
     
   }
@@ -230,7 +231,7 @@ void  rotate_l(){
     
     ang_left += 1; 
 
-    if(ang_left > rot-1){
+    if(ang_left > rot){
       ang_left = 0;
     }
     
@@ -239,7 +240,7 @@ void  rotate_l(){
     ang_left -= 1; 
 
     if(ang_left < 0){
-      ang_left = rot-1;
+      ang_left = rot;
     }
     
   }
