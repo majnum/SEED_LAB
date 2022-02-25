@@ -14,12 +14,18 @@ int desired_angle = -1;
 
 #define r 0.05 
 #define b 0.1
-#define rot 3200
+#define rot 300
 #define CLK 2
 #define DT 4
 #define CLK2 3
 #define DT2 5 
 #define pi 3.14159
+#define TriStatePin 4
+#define Motor1DirControlPin 7
+#define Motor1VoltControlPin 9
+#define FaultPin 12
+
+
 
 volatile int ang_right = 0; 
 volatile int ang_left = 0;
@@ -30,12 +36,20 @@ volatile int time_r = 0;
 volatile float theta_r;
 volatile float theta_l;
 
-volatile float x = 0;
-volatile float y = 0; 
-volatile float phi = 0; 
 
-volatile byte data = 0;
-
+//Control Variables
+long int oldPosition  = 0;
+double Kp = .50;
+int given = 75;
+int directionsign = 0;
+double Ki = 0.019;
+double Kd = 0.0334;
+unsigned long currentTime = 0;
+double integral = 0;
+double analog;
+int closeEnough = 10;
+long int newPosition;
+int delta =0;
 
 void setup() {
   //Enable serial communication
@@ -59,6 +73,14 @@ void setup() {
  // Create an ISR attached to pin 2 on a rising edge. 
   attachInterrupt(digitalPinToInterrupt(CLK), rotate_r, RISING);
   attachInterrupt(digitalPinToInterrupt(CLK2), rotate_l, RISING);
+
+
+  //MotorSetup
+  pinMode(TriStatePin, OUTPUT); 
+  analogWrite(TriStatePin, 255); 
+
+  pinMode(Motor1VoltControlPin, OUTPUT);
+  pinMode(Motor1DirControlPin, OUTPUT);
 
   
   
@@ -110,10 +132,60 @@ void loop() {
       theta_l = (float) ang_left*rot / (2*pi); 
       //Serial.print(theta_r);
       //Serial.print(" \n");
+
+
+//Control Code *****************************************************************************
+    currentTime = millis();
+    long int newPosition = ang_right;
+    if (newPosition != oldPosition) {
+    oldPosition = newPosition;
+    Serial.println(newPosition);
+    }
+
+     //integral calculation
+//     if (abs(newPosition - given) < intThreshholdCounts) {
+      integral += (double)(newPosition-oldPosition) * 0.05;
+//    }
+//    else if (abs(newPosition - given) > intThreshholdCounts) {
+//    integral = 0; //zero out the integral when we're close enough to desired position
+//    }
+   if (abs(newPosition - given) < closeEnough) {
+    integral = 0;
+    }
+    
+ 
+
        
-      
-      
-      
+    if (newPosition - given < 0 || newPosition - given > 0) {
+    
+    newPosition = ang_right;
+    in_data[0] = newPosition / 20;
+    delta = given - newPosition;
+    analog = delta*(Kp + Kd * (double)(newPosition - oldPosition)*20 + integral * Ki); //movement speed of motor
+    if (analog < 0) {
+      directionsign = 255;
+    }else{
+      directionsign = 0;
+    }
+    analog = abs(analog);
+    if (analog > 255) {
+      analog = 255;
+    } //limiter for out of bounds for output of controller
+    if (analog < 0) {
+      analog = 0;
+    }
+    
+    analogWrite(Motor1VoltControlPin, analog);
+    analogWrite(Motor1DirControlPin,directionsign);
+    
+//    
+//    if (abs(newPosition - given) < intThreshholdCounts) {
+//      integral += (double)abs(newPosition - given) * 0.05;
+//    }
+    Serial.println((double)newPosition * (PI / 1600.0));
+    }
+
+    while (millis() < currentTime + 50); //timer for consistency of next control input calculation - 50ms
 }
 
 //When a rising edge on pin 2 is detected check the direction of the Encoder based on previous inputs. 
