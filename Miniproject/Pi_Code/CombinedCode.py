@@ -48,7 +48,7 @@ def displayRes(setpoint, position):
     lcd.clear()
     # Set LCD color to green
     lcd.color = [0, 100, 0]
-    message = "Setpoint:" + str(setpoint) + "\nPosition:" + str(position) 
+    message = "Setpoint:" + str(setpoint)[0:5:1] + "\nPosition:" + str(position)[0:5:1] 
     lcd.message = message
 
 def nothing(x):
@@ -135,7 +135,7 @@ while (1):
     if region != -1:
         vals.append(region)
         writeNumber(vals, 0)
-    
+        region = region * 1.57079632679
     number = readNumber(0)
     message = ""
     for num in number:
@@ -146,7 +146,7 @@ while (1):
     pos = str(val)
     displayRes(region, pos)
     
-    time.sleep(2)
+    time.sleep(0.7)
     #cv.imshow('combined image', combinedImage)
     #cv.waitKey(3000)
     #cv.destroyAllWindows()
