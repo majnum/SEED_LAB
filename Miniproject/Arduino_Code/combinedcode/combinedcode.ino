@@ -14,10 +14,12 @@ int desired_angle = -1;
 
 #define r 0.05 
 #define b 0.1
+
 #define rot 3200 
 #define CLK 2 
 #define DT 3  
 #define CLK2 4
+
 #define DT2 5 
 #define pi 3.14159
 #define TriStatePin 4
@@ -36,6 +38,7 @@ volatile int time_r = 0;
 
 volatile double theta_r;
 volatile double theta_l;
+
 
 //****************************************************************************************
 
@@ -86,6 +89,7 @@ int lastStateCLK;
 //****************************************************************************************
 
 
+
 void setup() {
 
   //Enable serial communication
@@ -99,8 +103,9 @@ void setup() {
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
   //Serial.println("Ready!");
-  
-  // initialize digital pin 
+
+// initialize digital pin 
+
   pinMode(CLK, INPUT_PULLUP);
   pinMode(DT, INPUT_PULLUP);
   pinMode(CLK2, INPUT_PULLUP);
@@ -143,7 +148,9 @@ void receiveData(int byteCount){
   }
   
   given = in_data[1] * 380;
+
   Serial.println(given); 
+
 }
 
 
@@ -171,6 +178,7 @@ void loop() {
       
       //Print the movement When their is new encoder data.
 
+
       //rotate_r();
       //rotate_l();
       
@@ -182,6 +190,7 @@ void loop() {
        
       //Run the controller – turns wheel to specified position 
       PIDController(); 
+
 }
 
 
@@ -199,6 +208,7 @@ void PIDController() {
 
   //Derivative Controller
   deriv = (rad - currentPosition) * 100; 
+
    
  //Gets current position 
   currentPosition = rad;
@@ -221,6 +231,7 @@ void PIDController() {
     digitalWrite (Motor1DirControlPin, true);
   } else {
     digitalWrite (Motor1DirControlPin, false);
+
   }
 
   int controlSignal = abs(analog); 
@@ -414,6 +425,8 @@ void updateEncoder(){
     }else if(rad<=-6.2831){
       rad = rad+6.2831;
       counter = 0;
+
+    
     }
     
 //    Serial.print("Direction: ");
