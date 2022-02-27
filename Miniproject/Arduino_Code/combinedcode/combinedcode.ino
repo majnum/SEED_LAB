@@ -147,7 +147,7 @@ void receiveData(int byteCount){
     read_offset = Wire.read();
   }
   
-  given = in_data[1] * 380;
+  given = in_data[1] * (pi / 2);
 
   Serial.println(given); 
 
@@ -159,8 +159,8 @@ void sendData(){
   for(int i = 0; i < 32; i++){
     data[i] = 0;
   }
-  Serial.println(ang_right);
-  String start_val = String(ang_right);
+  Serial.println(counter);
+  String start_val = String(counter);
   for(int i = 0; i < start_val.length(); i++){
     data[i] = (int)start_val[i];
   }

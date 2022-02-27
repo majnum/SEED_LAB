@@ -142,7 +142,7 @@ while (1):
         if num != 0:
             message = message + chr(num)
             
-    val = int(message) * 0.020943951
+    val = int(message) * 0.00785398163397
     pos = str(val)
     displayRes(region, pos)
     
