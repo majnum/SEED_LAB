@@ -136,7 +136,13 @@ while (1):
         vals.append(region)
         writeNumber(vals, 0)
         region = region * 1.57079632679
-    number = readNumber(0)
+    
+    number = -1
+    try:    
+        number = readNumber(0)
+    except OSError:
+        print("I2C Error")
+        
     message = ""
     for num in number:
         if num != 0:

@@ -1,7 +1,7 @@
 
 #include <Wire.h>
 
-
+//Communication Vars
 #define SLAVE_ADDRESS 0x04
 int read_offset = 0;
 int state = 0;
@@ -9,9 +9,7 @@ int len = 0;
 int in_data[32] = {};
 int desired_angle = -1;
 
-// A program that reads the direction of two Encoders and calculates movement. 
-// By Joey Thurman 2/23/2022
-
+//Define Some Useful Constants 
 #define r 0.05 
 #define b 0.1
 
@@ -46,40 +44,21 @@ volatile double theta_l;
 //Control Variables
 volatile long int oldPosition  = 0;
 
-volatile double Kp =  10.06;
-
-volatile double given = PI/2;
-
+volatile double Kp =  3; //Proportional Controllor
+volatile double given = 0; //Desired Angle
 volatile int directionsign = 0;
-
-volatile double Ki = 2.3;
-
-volatile double Kd = .1;
-
-//volatile unsigned long currentTime = 0;
-
-volatile double integral = 0;
-
-volatile double deriv = 0;
-
-volatile double analog;
-
-//volatile int closeEnough = 10;
-
+volatile double Ki = 0.1; //Integral Controller
+volatile double Kd = 0; //Deriv. Controller -- Set to Zero to Disable. System is physically overdamped.  
+volatile double integral = 0; //Used in controller 
+volatile double deriv = 0; //Not Used with Kd = 0
+volatile double analog; //Used to write to PWM wave controlling 
 volatile double currentPosition = 0;
+volatile double delta = 0; //Error Signal
 
-volatile double delta = 0;
-
-//****************************************************************************************
-
-
-//***Used in new control code***
 float currentTime = 0; 
 float samplingTime = 0;
 float storedTime = 0; 
-//float motorPosition = 0;
-//float motorTheta = 0;
-float rad = 0;
+float rad = 0; //Current Angle
 boolean newCount = false;
 String currentDir = "";
 int counter = 0;
@@ -115,12 +94,12 @@ void setup() {
   lastStateCLK = digitalRead(CLK);
   
 
- // Create an ISR attached to pin 2 on a rising edge. 
+ // Create two ISRs
   attachInterrupt(digitalPinToInterrupt(CLK), updateEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(DT), updateEncoder, CHANGE);
 
 
-  //MotorSetup
+  //Motor Setup
   pinMode(TriStatePin, OUTPUT); 
   analogWrite(TriStatePin, 255); 
 
@@ -147,7 +126,7 @@ void receiveData(int byteCount){
     read_offset = Wire.read();
   }
   
-  given = in_data[1] * (pi / 2);
+  given = in_data[1] * (PI/2);
 
   Serial.println(given); 
 
@@ -173,21 +152,7 @@ void sendData(){
 // the loop function runs over and over again forever
 void loop() {
 
-  //  motorPosition = theta_r;
-  //  motorTheta = theta_r; //2 * PI * (double)motorPosition / (double)rot;
-      
-      //Print the movement When their is new encoder data.
-
-
-      //rotate_r();
-      //rotate_l();
-      
-//      theta_r = (double) ang_right*(2*pi) / (double) rot; 
-//      theta_l = (double) ang_left*(2*pi) / (double) rot; 
-//      Serial.print(theta_r);
-//      //Serial.print(" \n");
-
-       
+        
       //Run the controller – turns wheel to specified position 
       PIDController(); 
 
@@ -195,8 +160,6 @@ void loop() {
 
 
 //***********************************************************************************************************
-// Note from ELi - I tried to redo the Controller code after talking with Darren Mcsweeny,
-// he gave me a run down of what the code should look like, the old code is commented out below
 
 //Controller implementation 
 void PIDController() { 
@@ -227,22 +190,16 @@ void PIDController() {
   
   
 
-  if(analog < 0){
-    digitalWrite (Motor1DirControlPin, true);
-  } else {
-    digitalWrite (Motor1DirControlPin, false);
-
-  }
+ 
 
   int controlSignal = abs(analog); 
 
   if (controlSignal > 255){
     controlSignal = 255;
     //integral = (controlSignal - Kp * delta) / Ki; 
-    analogWrite(Motor1VoltControlPin, controlSignal);
-  }
+      }
   
-  if  (abs(delta) < 0.008) 
+  if  (abs(delta) < 0.005) 
   { 
     controlSignal = 0; 
     analogWrite(Motor1VoltControlPin, controlSignal); 
@@ -250,16 +207,16 @@ void PIDController() {
   else if (delta > 0) 
   { 
     digitalWrite (Motor1DirControlPin, HIGH); 
-    //analogWrite(Motor1VoltControlPin, controlSignal); 
+    analogWrite(Motor1VoltControlPin, controlSignal); 
   } else if (delta < 0) 
   { 
     digitalWrite (Motor1DirControlPin, LOW); 
-    //analogWrite(Motor1VoltControlPin, controlSignal); 
+    analogWrite(Motor1VoltControlPin, controlSignal); 
   } 
  
-  Serial.println(integral); 
+  //Serial.println(integral); 
   //Serial.print("\t"); 
-  //Serial.println(currentPosition); 
+  Serial.println(analog); 
   integral = integral; 
   storedTime = currentTime; 
 
@@ -268,137 +225,11 @@ void PIDController() {
 
 
 
-//Control Code *****************************************************************************
-//    currentTime = millis();
-//    static double newPosition = 0;
-//    static double deriv = 0; 
-//
-//    newPosition = theta_r;
-//    delta = given - newPosition;
-//
-//    Serial.print("\t");
-//    Serial.println(delta);
-//
-//     //integral calculation
-////     if (abs(newPosition - given) < ) {
-//      integral = integral + (double)(delta) * 0.01;
-//      
-////    }
-////    if (abs(newPosition - given) > intThreshholdCounts) {
-// //   integral = 0; //zero out the integral when we're close enough to desired position
-////    
-//   
-//    
-//   //deriv = Kd*((double)(newPosition - oldPosition)*100);
-//
-//       
-//   
-//    //in_data[0] = newPosition / 20;
-//    
-//    analog = (delta*Kp + integral* Ki); //movement speed of motor
-//    if (analog < 0) {
-//      digitalWrite(Motor1DirControlPin,HIGH);
-//    }else{
-//      digitalWrite(Motor1DirControlPin,LOW);
-//    }
-//    analog = abs(analog);
-//    if (analog > 255) {
-//      analog = 255;
-//    } //limiter for out of bounds for output of controller
-//    if (analog < 0) {
-//      analog = 0;
-//    }
-//
-//    if(abs(delta) < .01 ){
-//      analog = 0;
-//      integral = 0; 
-//      analogWrite(Motor1VoltControlPin, analog);
-//    }else if (delta > 0){
-//      digitalWrite(Motor1DirControlPin,HIGH);
-//      analogWrite(Motor1VoltControlPin, analog);
-//
-//    } else if (delta < 0){
-//      digitalWrite(Motor1DirControlPin,LOW);
-//      analogWrite(Motor1VoltControlPin, analog);
-//
-//    }
-//    
-//    
-//    analogWrite(Motor1VoltControlPin, analog);
-//   
-//    
-////    
-////    if (abs(newPosition - given) < intThreshholdCounts) {
-////      integral += (double)abs(newPosition - given) * 0.05;
-////    }
-//    //Serial.println((double)newPosition * (PI / 1600.0));
-//    
-//    while (millis() < currentTime + 10); //timer for consistency of next control input calculation - 10ms
-//}
+
 
 
 //***************************************************************************************************************************
 //            Rotate code
-
-////When a rising edge on pin 2 is detected check the direction of the Encoder based on previous inputs. 
-//void  rotate_r(){
-//
-//  //Read the data from the encoder
-//  byte r_update = digitalRead(DT);
-//  float oldangright = ang_right;
-//
-//  //Check which way its going
-//  if(r_update != digitalRead(CLK)){
-//
-//    
-//    ang_right += 1; 
-//
-//    if(ang_right > rot){
-//      ang_right = 0;
-//    }
-//    
-//    
-//  } else{
-//   
-//    ang_right -= 1; 
-//
-//    if(ang_right < 0){
-//      ang_right = rot -1;
-//    }
-//    
-//  }
-//
-//  
-//
-//}
-//      
-//void  rotate_l(){
-//
-//  //Read the data from the encoder
-//  byte l_update = digitalRead(DT2);
-//  float ang_old = ang_left;
-//  //Check which way its going
-//  if(l_update != digitalRead(CLK2)){
-//    
-//    ang_left += 1; 
-//
-//    if(ang_left > rot){
-//      ang_left = 0;
-//    }
-//    
-//  } else{
-//
-//    ang_left -= 1; 
-//
-//    if(ang_left < 0){
-//      ang_left = rot;
-//    }
-//    
-//  }
-
-//*******************************************************************
-//               Get current position   
- 
 
 
 void updateEncoder(){
