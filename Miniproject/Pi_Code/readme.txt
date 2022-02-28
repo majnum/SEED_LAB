@@ -1,6 +1,10 @@
 Miniproject Pi readme
 
+Authors for Pi Code: Dylan Bott, Joshua Higgins
+
 This code uses computer vision and I2C communication to set a motors position and display the setpoint and current motor position to an LCD display.
+
+The final code being used was CombinedCode.py. The pictures currently in the repository aren't great examples of the pictures the PiCamera had taken, but there are the calibration pictures used to set the AWB gains and markerPic.jpg is the picture containing our marker that gets filtered and returns the region the marker is in.
 
 Marker Detection Scheme:
   Initialize and set PiCamera
