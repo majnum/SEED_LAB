@@ -1,1 +1,7 @@
 This file cotains the tasks assigned to each teammate. 
+Eli:PI Controller and MATLAB Simulation
+Joey: Motor and Encoder Interfacing, Assisted in Tuning Controller
+Dylan: Computer Vision to Read Marker Position
+Josh: Communication from the Pi to Arduino vice versa. 
+
+
