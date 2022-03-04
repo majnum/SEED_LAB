@@ -1,1 +1,3 @@
-Miniproject Arduino readme
+Within this Folder is the code we devolped for the Arduino to meet the requirments outlined the Mini-Project Documentation. 
+
+The folder called 'combinedcode' cotains the code actually used to run the contoller/motor and communicate with the Rasberry Pi. With the PI connected to the Motor shield which is powered via a 7.5V voltage source. 4 Pins run from the Arduino pinouts to interface with the motor encoder. The encoders's Vcc and GND connections then pins 2 and 3 to the A and B channels of the encoder. The Motor's Power connection attach's to Motor A's block on the motor shield. The Pi powers the arduino so the jumper connecting the motor shield and Aruino's Vcc should not be installed.  
