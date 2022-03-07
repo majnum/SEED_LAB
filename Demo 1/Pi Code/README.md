@@ -1,5 +1,6 @@
 # SEED_LAB
+Names: Josh, Dylan
 
-Welcome to the team group 9
-
-Names: Josh, Dylan, Eli, and Joe
+Readme for Pi Code. 
+Gradable working code can be found in CombinedCode.py
+See file for code description.
