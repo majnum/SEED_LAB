@@ -18,11 +18,6 @@ camera = PiCamera()
 #between the camera axis and the tape. Positive angle when tape is to left of
 #camera axis
 
-#find distortion coefficients to calibrate camera distortion
-    #f = 3.6mm
-    #horz FOV = 53.5 deg
-    #vert FOV = 41.41 deg
-
 camera.start_preview()
 camera.iso = 400
 time.sleep(3)
@@ -46,37 +41,49 @@ avgAwb = (avgRedAwb, avgBlueAwb)
 camera.awb_mode = 'off'
 camera.awb_gains = avgAwb
 
-#fixing distortion
-# termination criteria
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-objp = np.zeros((6*7,3), np.float32)
-objp[:,:2] = np.mgrid[0:7,0:6].T.reshape(-1,2)
- 
-# Arrays to store object points and image points from all the images.
-objpoints = [] # 3d point in real world space
-imgpoints = [] # 2d points in image plane.
-
-images = glob.glob('*.jpg')
- 
-for fname in images:
-    img = cv.imread(fname)
-    gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-
-    # Find the chess board corners
-    ret, corners = cv.findChessboardCorners(gray, (7,6),None)
-
-    # If found, add object points, image points (after refining them)
-    if ret == True:
-        objpoints.append(objp)
-
-        cv.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
-        imgpoints.append(corners)
-
-        # Draw and display the corners
-        cv.drawChessboardCorners(img, (7,6), corners2,ret)
-        cv.imshow('img',img)
-        cv.waitKey(500)
-
-cv.destroyAllWindows()
+#find blue tape
+while(1):
+    camera.capture('pic.jpg')
+    img = cv.imread('pic.jpg')
+    img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+    
+    #HSV bounds to isolate blue tape
+    lowerBound = (100, 120, 170)
+    upperBound = (120, 255, 255)
+    mask = cv.inRange(img2, lowerBound, upperBound)
+    imgOut = cv.bitwise_and(img, img, mask = mask)
+    
+    #img filtering
+    blur = cv.GaussianBlur(imgOut, (3,3), 0)
+    kernel = np.ones((14,14), np.uint8)
+    opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
+    closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
+    sideBySide = np.concatenate((img, imgOut, closing), axis=1) #for troubleshooting/calibrating
+    sideBySide = cv.resize(sideBySide, None, fx=0.3, fy=0.3, interpolation = cv.INTER_LINEAR)
+    cv.imwrite('prePostFilter.jpg', sideBySide)
+    
+    #find center of tape
+    imgGray = cv.cvtColor(closing, cv.COLOR_BGR2GRAY)
+    ret, imgThresh = cv.threshold(imgGray, 40, 255, cv.THRESH_BINARY)
+    nonZero = imgThresh.nonzero()
+    avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
+    
+    #calculating angle
+    xFov = 53.5
+    yFov = 41.41
+    
+    imgCenterX = closing.shape[1]/2
+    imgCenterY = closing.shape[0]/2
+    centerToCenterX = avg[1] - imgCenterX
+    centerToCenterY = avg[0] - imgCenterY
+    angleX = (xFov / 2) * (centerToCenterX / imgCenterX)
+    angleY = (yFov / 2) * (centerToCenterY / imgCenterY)
+    
+    print('X angle: ', angleX)
+    print('Y angle: ', angleY)
+    
+    cv.imshow('sideBySide', sideBySide)
+    cv.waitKey(5000)
+    cv.destroyAllWindows()
+    #time.sleep(0.05)
+    
