@@ -3,6 +3,56 @@ import cv2 as cv
 import numpy as np
 import time
 import glob
+import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
+import smbus2 as smbus
+import board
+
+
+# Modify this if you have a different sized Character LCD
+lcd_columns = 16
+lcd_rows = 2
+
+# Initialise I2C bus.
+i2c = board.I2C()  # uses board.SCL and board.SDA
+
+# Initialise the LCD class
+lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
+lcd.color = [0, 0, 0]
+lcd.clear()
+
+# for RPI version 1, use “bus = smbus.SMBus(0)”
+bus = smbus.SMBus(1)
+
+# This is the address we setup in the Arduino Program
+address = 0x04
+
+
+#function that writes a byte array to the I2C wire
+def writeNumber(value, offset):
+    bus.write_i2c_block_data(address, offset, value)
+    return -1
+
+#function that reads a byte array off of the I2C wire
+def readNumber(offset):
+    number = bus.read_i2c_block_data(address, offset, 32)
+    return number
+
+#function resets the LCD display to an initial state
+def displayReset():
+    lcd.clear()
+    # Set LCD color to green
+    lcd.color = [0, 100, 0]
+
+#Initially reset display
+displayReset()
+
+#Displays setpoint and position on LCD
+def displayRes(message):
+    lcd.clear()
+    # Set LCD color to green
+    lcd.color = [0, 100, 0] 
+    lcd.message = message
+
 
 def nothing(x):
     pass
@@ -13,9 +63,6 @@ def imgDisp(imgname, img):
     cv.destroyAllWindows()
 
 camera = PiCamera()
-
-
-#6 7/8"
 
 #detect and recognize strip of 1" blue and report the angle in degrees
 #between the camera axis and the tape. Positive angle when tape is to left of
@@ -51,8 +98,8 @@ while(1):
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (100, 120, 170)
-    upperBound = (120, 255, 255)
+    lowerBound = (100, 120, 60)
+    upperBound = (120, 255, 200)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -82,6 +129,9 @@ while(1):
     angleX = (xFov / 2) * (centerToCenterX / imgCenterX)
     angleY = (yFov / 2) * (centerToCenterY / imgCenterY)
     
+    message = "Angle:" + str(angleX)[0:5:1]
+    displayRes(message)
+
     print('X angle: ', angleX)
     print('Y angle: ', angleY)
     
