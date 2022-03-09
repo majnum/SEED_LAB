@@ -3,7 +3,9 @@ import cv2 as cv
 import numpy as np
 import time
 import glob
-
+import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
+import smbus2 as smbus
+import board
 
 
 # Modify this if you have a different sized Character LCD
@@ -96,8 +98,8 @@ while(1):
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (100, 120, 170)
-    upperBound = (120, 255, 255)
+    lowerBound = (100, 120, 60)
+    upperBound = (120, 255, 200)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     

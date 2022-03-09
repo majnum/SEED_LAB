@@ -14,6 +14,9 @@ def imgDisp(imgname, img):
 
 camera = PiCamera()
 
+
+#6 7/8"
+
 #detect and recognize strip of 1" blue and report the angle in degrees
 #between the camera axis and the tape. Positive angle when tape is to left of
 #camera axis
