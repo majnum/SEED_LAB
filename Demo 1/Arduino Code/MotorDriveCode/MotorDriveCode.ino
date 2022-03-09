@@ -10,15 +10,15 @@ int in_data[32] = {};
 int desired_angle = -1;
 
 //Define Some Useful Constants 
-#define r 0.05 
+#define r 5.5 
 #define b 0.1
+#define rot 800 
 
-#define rot 3200 
 #define CLK_R 2 
 #define DT_R 3  
 #define CLK_L 4
-
 #define DT_L 5 
+
 #define pi 3.14159
 #define TriStatePin 4
 #define Motor1DirControlPin 7
@@ -31,12 +31,11 @@ int desired_angle = -1;
 volatile int time_l = 0;
 volatile int time_r = 0; 
 
-volatile double theta_dot_r;
-volatile double theta_dot_l;
+volatile double theta_dot_R;
+volatile double theta_dot_L;
 
-int rad_R = 0;
-int rad_L = 0; 
-
+double x_loc = 0;
+double y_loc = 0; 
 
 //****************************************************************************************
 
@@ -58,7 +57,9 @@ volatile double delta = 0; //Error Signal
 float currentTime = 0; 
 float samplingTime = 0;
 float storedTime = 0; 
-float rad_L_R = 0; //Current Angle
+float rad_R = 0; //Current Angle
+float rad_L = 0; //Current Angle
+
 
 //Encoder Vars
 boolean newCount_R = false;
@@ -72,6 +73,11 @@ String currentDir_L = "";
 int counter_L = 0;
 int currentStateCLK_L;
 int lastStateCLK_L;
+
+
+double rho_dot = 0; 
+double phi_dot = 0; 
+
 
 //****************************************************************************************
 
@@ -161,9 +167,24 @@ void sendData(){
 // the loop function runs over and over again forever
 void loop() {
 
+      //Localization Code
+
+
+      rho_dot = r * (theta_dot_L + theta_dot_R) / (double) 2;
+
+      phi_dot = r * (theta_dot_L - theta_dot_R) / (double) b; 
+
+
+      x_loc = x_loc + rho_dot*cos(phi_dot); 
+      y_loc = y_loc + rho_dot*sin(phi_dot);
+   
+
+
+
+
         
       //Run the controller – turns wheel to specified position 
-      PIDController_R(); 
+      //PIDController_R(); 
 
 }
 
@@ -225,7 +246,7 @@ void PIDController_R() {
  
   //Serial.println(integral); 
   //Serial.print("\t"); 
-  Serial.println(analog); 
+  Serial.println(analog);
   integral = integral; 
   storedTime = currentTime; 
 
@@ -246,21 +267,31 @@ void updateEncoder_R(){
   currentStateCLK_R = digitalRead(CLK_R);
   int currentStateDT = digitalRead(DT_R);
   
+  int newTime = millis();
+  static int oldTime = 0; 
+  
 
   
   if (currentStateCLK_R != lastStateCLK_R  && currentStateCLK_R == 1){
 
     
     if (currentStateDT != currentStateCLK_R) {
-      counter_R ++;
+      counter_R --;
       currentDir_R ="CCW";
     } else {
       // Encoder is rotating CW so increment
-      counter_R --;
+      counter_R ++;
       currentDir_R ="CW";
     }
 
+    double oldRad = rad_R;
+
     rad_R = (counter_R*2*PI)/800;
+    double deltaT = ((newTime-oldTime)*0.001);
+    theta_dot_R = (rad_R - oldRad) / (double) deltaT; 
+    
+    
+    
      if(rad_R>=6.2831){
       rad_R=rad_R-6.2831;
       counter_R = 0;
@@ -271,22 +302,29 @@ void updateEncoder_R(){
     
     }
     
-//    Serial.print("Direction: ");
-//    Serial.print(currentDir_L_R);
-//    Serial.print(" | counter_L_R: ");
-//    Serial.println(counter_L_R);
+    Serial.print("Direction: ");
+    Serial.print(currentDir_R);
+    Serial.print(" | counter_R: ");
+    Serial.println(counter_R);
+    Serial.println(theta_dot_R);
     
     newCount_R = true;
   }
 
   // Remember last CLK state
   lastStateCLK_R = currentStateCLK_R;
+
+  oldTime = newTime;
 }
 
 void updateEncoder_L(){
   
   currentStateCLK_L = digitalRead(CLK_L);
   int currentStateDT = digitalRead(DT_L);
+
+  int newTime = millis();
+  static int oldTime = 0; 
+  
 
   
   if (currentStateCLK_L != lastStateCLK_L  && currentStateCLK_L == 1){
@@ -301,7 +339,13 @@ void updateEncoder_L(){
       currentDir_L ="CW";
     }
 
+  
+    double oldRad = rad_L;
+
     rad_L = (counter_L*2*PI)/800;
+    theta_dot_L = (rad_L - oldRad) / (double) (oldTime-newTime); 
+
+    
      if(rad_L>=6.2831){
       rad_L=rad_L-6.2831;
       counter_L = 0;
@@ -320,6 +364,9 @@ void updateEncoder_L(){
     newCount_L = true;
   }
 
+
+  oldTime = newTime;
+  
   // Remember last CLK state
   lastStateCLK_L = currentStateCLK_L;
   static int lastStateDT = currentStateDT; 
