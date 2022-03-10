@@ -6,6 +6,7 @@ import glob
 import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
 import smbus2 as smbus
 import board
+import math
 
 
 # Modify this if you have a different sized Character LCD
@@ -69,11 +70,10 @@ camera = PiCamera()
 #camera axis
 
 camera.start_preview()
-camera.iso = 400
-time.sleep(3)
+camera.iso = 200
+time.sleep(2)
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
-
 #take 4 calibration pictures
 awbRed = [0, 0, 0, 0]
 awbBlue = [0, 0, 0, 0]
@@ -91,15 +91,59 @@ avgAwb = (avgRedAwb, avgBlueAwb)
 camera.awb_mode = 'off'
 camera.awb_gains = avgAwb
 
+#camera.capture('calibrate.jpg')
+#img = cv.imread('calibrate.jpg')
+#img = cv.resize(img, None, fx=0.5, fy=0.5, interpolation = cv.INTER_LINEAR)
+#img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+#cv.namedWindow('yellow')
+#cv.createTrackbar('H lower', 'yellow', 20, 255, nothing)
+#cv.createTrackbar('H upper', 'yellow', 54, 255, nothing)
+#cv.createTrackbar('S lower', 'yellow', 154, 255, nothing)
+#cv.createTrackbar('S upper', 'yellow', 253, 255, nothing)
+#cv.createTrackbar('V lower', 'yellow', 137, 255, nothing)
+#cv.createTrackbar('V upper', 'yellow', 256, 255, nothing)
+
+    #loop for trackbars, escape key breaks loop and moves on
+#while(1):
+#        #just in case
+#    try:
+#        cv.imshow('yellow', imgOut)
+#    except:
+#        pass
+        
+        #reading trackbar values
+#    hUp = cv.getTrackbarPos('H upper', 'yellow')
+#    hLow = cv.getTrackbarPos('H lower', 'yellow')
+#    sUp = cv.getTrackbarPos('S upper', 'yellow')
+#    sLow = cv.getTrackbarPos('S lower', 'yellow')
+#    vUp = cv.getTrackbarPos('V upper', 'yellow')
+#    vLow = cv.getTrackbarPos('V lower', 'yellow')
+
+#        #setting color recognition boundaries from trackbars
+#    lowerBound = (hLow, sLow, vLow)
+#    upperBound = (hUp, sUp, vUp)
+#        #creating mask based on bounds
+#    mask = cv.inRange(img2, lowerBound, upperBound)
+#        #and mask with og image to isolate color range selected
+#    imgOut = cv.bitwise_and(img, img, mask = mask)
+#        #cv.imwrite('imgYout.jpg', imgYout)
+#    
+#    k = cv.waitKey(1) & 0xFF
+#    if k == 27:
+#        break
+    
+#cv.destroyAllWindows()
+
 #find blue tape
 while(1):
     camera.capture('pic.jpg')
     img = cv.imread('pic.jpg')
+    img = img[int(img.shape[0]/2) : int(img.shape[1])]
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (100, 120, 60)
-    upperBound = (120, 255, 200)
+    lowerBound = (100, 100, 100)
+    upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -123,20 +167,28 @@ while(1):
     yFov = 41.41
     
     imgCenterX = closing.shape[1]/2
-    imgCenterY = closing.shape[0]/2
+    imgCenterY = closing.shape[0]
     centerToCenterX = avg[1] - imgCenterX
-    centerToCenterY = avg[0] - imgCenterY
+    centerToCenterY = avg[0]# - imgCenterY <- since i cropped out top half of image
     angleX = (xFov / 2) * (centerToCenterX / imgCenterX)
-    angleY = (yFov / 2) * (centerToCenterY / imgCenterY)
+    angleY = (yFov / 2) * (centerToCenterY / imgCenterY) + 2.4 #plus 2.4 to correct any assembly errors
+    
+    #calculate approximate distance to tape center
+    if(angleY > 0):
+        distanceToTape = 6.875 / math.tan((abs(angleY)) * math.pi / 180)
+    else:
+        distanceToTape = -1  #made an oopsie if this happens
+    
     
     message = "Angle:" + str(angleX)[0:5:1]
     displayRes(message)
 
     print('X angle: ', angleX)
     print('Y angle: ', angleY)
+    print('distance: ', distanceToTape)
     
     cv.imshow('sideBySide', sideBySide)
-    cv.waitKey(5000)
+    cv.waitKey(1000)
     cv.destroyAllWindows()
     #time.sleep(0.05)
     
