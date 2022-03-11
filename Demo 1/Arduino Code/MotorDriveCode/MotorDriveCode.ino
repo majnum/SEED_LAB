@@ -15,8 +15,8 @@ int desired_angle = -1;
 #define rot 800 
 
 #define CLK_R 2 
-#define DT_R 3  
-#define CLK_L 4
+#define DT_R 4  
+#define CLK_L 3
 #define DT_L 5 
 
 #define pi 3.14159
@@ -331,11 +331,11 @@ void updateEncoder_L(){
 
     
     if (currentStateDT != currentStateCLK_L) {
-      counter_L ++;
+      counter_L --;
       currentDir_L ="CCW";
     } else {
       // Encoder is rotating CW so increment
-      counter_L --;
+      counter_L ++;
       currentDir_L ="CW";
     }
 
@@ -343,7 +343,8 @@ void updateEncoder_L(){
     double oldRad = rad_L;
 
     rad_L = (counter_L*2*PI)/800;
-    theta_dot_L = (rad_L - oldRad) / (double) (oldTime-newTime); 
+    double deltaT = ((newTime-oldTime)*0.001);
+    theta_dot_L = (rad_L - oldRad) / (double) deltaT; 
 
     
      if(rad_L>=6.2831){
@@ -356,10 +357,11 @@ void updateEncoder_L(){
     
     }
     
-//    Serial.print("Direction: ");
-//    Serial.print(currentDir_L);
-//    Serial.print(" | counter_L: ");
-//    Serial.println(counter_L);
+   Serial.print("Direction: ");
+    Serial.print(currentDir_L);
+    Serial.print(" | counter_L: ");
+    Serial.println(counter_L);
+    Serial.println(theta_dot_L);
     
     newCount_L = true;
   }
