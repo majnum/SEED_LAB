@@ -182,6 +182,13 @@ while(1):
     
     message = "Angle:" + str(angleX)[0:5:1]
     displayRes(message)
+    
+    vals = []
+    if not math.isnan(angleX):
+	for ch in str(angleX)[0:8:1]:
+		vals.append(ch)
+    	writeNumber(vals, 0)
+	   
 
     print('X angle: ', angleX)
     print('Y angle: ', angleY)
