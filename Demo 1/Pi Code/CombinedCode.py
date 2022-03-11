@@ -170,7 +170,7 @@ while(1):
     imgCenterY = closing.shape[0]
     centerToCenterX = avg[1] - imgCenterX
     centerToCenterY = avg[0]# - imgCenterY <- since i cropped out top half of image
-    angleX = (xFov / 2) * (centerToCenterX / imgCenterX)
+    angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
     angleY = (yFov / 2) * (centerToCenterY / imgCenterY) + 2.4 #plus 2.4 to correct any assembly errors
     
     #calculate approximate distance to tape center
@@ -182,6 +182,13 @@ while(1):
     
     message = "Angle:" + str(angleX)[0:5:1]
     displayRes(message)
+    
+    vals = []
+    if not math.isnan(angleX):
+	for ch in str(angleX)[0:8:1]:
+		vals.append(ch)
+    	writeNumber(vals, 0)
+	   
 
     print('X angle: ', angleX)
     print('Y angle: ', angleY)
