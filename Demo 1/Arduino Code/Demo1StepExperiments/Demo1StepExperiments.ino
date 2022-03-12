@@ -5,31 +5,34 @@
 
 #define clkRight 2
 #define clkLeft  3
-#define dtRight  4
-#define dtLeft   5
+#define dtRight  6
+#define dtLeft   11       
+
+#define TriStatePin 4
+#define motorDirLeft     7
+#define motorDirRight    8   
+#define motorVolLeft   9  //PWM for left motor
+#define motorVolRight  10 //PWM for right motor
 
 //Right and Left Encoder Variables
 int counterRight = 0;
+int newCounterRight = 0;
+int oldCounterRight = 0;
+int deltaCounterRight;
 int counterLeft = 0;
+int newCounterLeft = 0;
+int oldCounterLeft = 0;
+int deltaCounterLeft = 0;
 int currentStateRight;
 int currentStateLeft;
 int lastStateRight;
 int lastStateLeft;
 String currentDirRight;
 String currentDirLeft;
+
+
 float thetaDotRight; // angular velocity
 float thetaDotLeft;
-
-//Wheel variables
-float wheelRadius = 0.23958333;           
-float distanceBetweenWheels = 1.156;
-
-//Important Math stuff
-int vectorV = 0;
-int deltaV = 0;
-double Va1 = (vectorV + deltaV)*0.5;
-double Va2 = (vectorV - deltaV)*0.5;
-
 
 //Keep track of time for both motors with these variables
 int tOldRight; // time old
@@ -38,6 +41,32 @@ int tNewRight; // time new
 int tNewLeft;
 int deltaTRight = 0; // time new - time old
 int deltaTLeft = 0;
+
+//Wheel variables
+float wheelRadius = 0.23958333;           
+float distanceBetweenWheels = 1.156;
+float radRight;
+float radLeft;
+
+//Important Math stuff
+int vectorV = 1;
+int deltaV = 0;
+double Va1 = (vectorV + deltaV)*0.5;
+double Va2 = (vectorV - deltaV)*0.5;
+
+//Overall time 
+float masterTime;
+double newTime;
+double oldTime;
+
+int moveFlag = 0;
+bool flagMoving = false;
+
+
+
+//Variables to track
+float dist = 0;
+float phi;
 
 int gatekeeperOld = 0; // only one conditional statement is accesed per ISR loop
 int gatekeeperNew = 1;
@@ -59,8 +88,18 @@ lastStateRight = digitalRead(clkRight);
 lastStateLeft = digitalRead(clkLeft);
 
 //One interrupt per motor
-attachInterrupt(clkRight, updateEncoder, CHANGE);
-attachInterrupt(clkLeft, updateEncoder2, CHANGE);
+attachInterrupt(digitalPinToInterrupt(clkRight), updateEncoder, CHANGE);
+attachInterrupt(digitalPinToInterrupt(clkLeft), updateEncoder2, CHANGE);
+
+//Motor Setup
+pinMode(TriStatePin, OUTPUT); 
+analogWrite(TriStatePin, 255); 
+
+  pinMode(motorVolLeft, OUTPUT);
+  pinMode(motorVolRight, OUTPUT);
+  pinMode(motorDirLeft, OUTPUT);
+  pinMode(motorDirRight, OUTPUT);
+
 }
 
 
@@ -70,26 +109,76 @@ void loop() {
   //Calculate Rho and Phi dot
   float rhoDot = wheelRadius*(thetaDotRight + thetaDotLeft)*0.5;
   float phiDot = wheelRadius*(thetaDotRight + thetaDotLeft)*0.86505190311;
+
+
+  digitalWrite(motorDirLeft,LOW);
+  digitalWrite(motorDirRight,HIGH);
+  
+  analogWrite(motorVolLeft, 255);      //sets the motors speed
+  analogWrite(motorVolRight, 255);      //sets the motors speed
+
   
   if(flag == true){ // only prints when the ISR is immediately triggered before
-  Serial.print("angular velocity (right/Left): "); // prints angular velocity
-  Serial.println(thetaDotRight); // prints AV
-  Serial.println(thetaDotLeft); // prints AV
-  Serial.print("Rho Dot is: "); 
-  Serial.println(rhoDot); // prints rhodot
-  Serial.print("Phi Dot is: "); 
-  Serial.println(phiDot); // prints rhodot
-  Serial.print("Va1: "); 
-  Serial.println(Va1); // prints Va1
-  Serial.print("Va2: "); 
-  Serial.println(Va2); // prints Va2
+    newTime = micros();
+    masterTime = (newTime - oldTime);
+    dist = (counterLeft + counterRight)*1.57/(2*800);
+    phi = ((-36.0*(counterRight))/(157.0));
+    Serial.print("angular velocity (right/Left): "); // prints angular velocity
+    Serial.println(thetaDotRight); // prints AV
+    Serial.println(thetaDotLeft); // prints AV
+    Serial.print("Rho Dot is: "); 
+    Serial.println(rhoDot); // prints rhodot
+    Serial.print("Phi Dot is: "); 
+    Serial.println(phiDot); // prints rhodot
+    Serial.print("Va1: "); 
+    Serial.println(Va1); // prints Va1
+    Serial.print("Va2: "); 
+    Serial.println(Va2); // prints Va2
   
   flag = false; // resets flag
+  oldTime = micros();
   }
-
+   if(moveFlag<=1000){
+  rotate(0);
+  }else if(moveFlag>=1000){
+    if(flagMoving == false){
+      flagMoving = true;
+      counterLeft = 0;
+      counterRight = 0;
+    }
+    moveDistance(9);
+  }
   
   
   }// END OF LOOP
+
+void rotate(float desAngle){
+  if(phi<desAngle+1 && phi>desAngle-1){
+    speedM1 = 0;
+    speedM2 = 0;
+    moveFlag++;
+  }else if(phi<desAngle){
+    speedM1 = -65;
+    speedM2 = 65;
+  }else if(phi>desAngle){
+    speedM1 = 65;
+    speedM2 = -65;
+  }
+    md.setM1Speed(speedM1);
+    md.setM2Speed(speedM2);
+}
+
+void moveDistance(float desDist){
+  if(dist<desDist){
+      speedM1=100;
+      speedM2=100;
+    md.setM1Speed(speedM1);
+    md.setM2Speed(speedM2);
+  }else{
+    md.setM1Speed(0);
+    md.setM2Speed(0);
+  }
+}
 
 //******************************************************************************************
 //     Encoder Functions (Right Motor = updateEncoder) and (Left Motor = updateEncoder2)
@@ -101,26 +190,30 @@ void updateEncoder(){ // ISR for updating encoder
 
   if(currentStateRight != lastStateRight && currentStateRight == 1){ // conditional to read the encoder
     if(gatekeeperOld == 0){ 
-      tNewRight = millis();
+      tNewRight = micros();
       gatekeeperNew = 0; // resets gates 
       gatekeeperOld = 1; // resets gates
       deltaTRight = tNewRight - tOldRight; // difference between time
-      thetaDotRight = (counter*2*3.14)/(800*deltaT); // calculates angular velocity
+      deltaCounterRight = newCounterRight - oldCounterRight;
+      thetaDotRight = (deltaCounterRight*2*3.14)/(800*deltaTRight); // calculates angular velocity
     }
-
+    oldCounterRight = counterRight;
     if(digitalRead(dtRight) != currentStateRight){ // increments encoder counts (either increasing or decreasing based on direction
-      counter --;
+      counterRight --;
       currentDirRight = "CCW";
     }
     else{
-      counter ++;
+      counterRight ++;
       currentDirRight = "CW";
     }
+    radRight = (counterLeft*2*3.14)/800;
+    newCounterRight = counterRight;
+    tOldRight = micros();
   }
   lastStateRight = currentStateRight;
 
   if(gatekeeperNew == 0){ // second conditional to capture time and set the flag to print angular velocity
-    tOldRight = millis();
+    tOldRight = micros();
     gatekeeperOld = 0;
     gatekeeperNew = 1;
     flag = true;
@@ -135,10 +228,11 @@ void updateEncoder2(){ // ISR for updating encoder
 
   if(currentStateLeft != lastStateLeft && currentStateLeft == 1){ // conditional to read the encoder
     if(gatekeeperOld == 0){ 
-      tNewLeft = millis();
+      tNewLeft = micros();
       gatekeeperNew = 0; // resets gates 
       gatekeeperOld = 1; // resets gates
       deltaTLeft = tNewLeft - tOldLeft; // difference between time
+      deltaCounterLeft = newCounterLeft - oldCounterLeft;
       thetaDotLeft = (counterLeft*2*3.14)/(800*deltaTLeft); // calculates angular velocity
     }
 
@@ -150,11 +244,15 @@ void updateEncoder2(){ // ISR for updating encoder
       counterLeft ++;
       currentDirLeft = "CW";
     }
+    radLeft = (counterLeft*2*3.14)/800;
+    newCounterLeft = counterLeft;
+    tOldLeft = micros();
   }
+  
   lastStateLeft = currentStateLeft;
 
   if(gatekeeperNew == 0){ // second conditional to capture time and set the flag to print angular velocity
-    tOld = millis();
+    tOldLeft = micros();
     gatekeeperOld = 0;
     gatekeeperNew = 1;
     flag = true;

@@ -15,9 +15,9 @@ int desired_angle = -1;
 #define rot 800 
 
 #define CLK_R 2 
-#define DT_R 4  
+#define DT_R 6  
 #define CLK_L 3
-#define DT_L 5 
+#define DT_L 8 
 
 #define pi 3.14159
 #define TriStatePin 4

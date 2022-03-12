@@ -8,17 +8,17 @@
 //******************************************************************************************
 
 //Define Motor Pins
-#define TriStatePin 4
-#define motDirLeft =    7
-#define motDirRight =   8   
-#define motorVolLeft =  9  //PWM for left motor
-#define motorVolRight = 10 //PWM for right motor
+#define TriStatePin    4
+#define motDirLeft     7
+#define motDirRight    8   
+#define motorVolLeft   9  //PWM for left motor
+#define motorVolRight  10 //PWM for right motor
 
 //Define Encoder Pins
 #define CLK_R  2   //Uses Interrupt pin
-#define DT_R  6
+#define DT_R   6
 #define CLK_L  3    //Uses Interuppt pin
-#define DT_L  7
+#define DT_L   11
 
 
 
@@ -47,18 +47,29 @@ float b = 1.156; // distance between wheels as a fraction of one foot
 
 
 //encoder variables
-
 int currentStateCLK_R;
 int currentStateCLK_L;
-int counter_L = 0;
-int counter_R = 0;
+int counter_L_old = 0;
+int counter_L_new = 0;
+int counter_R_old = 0;
+int counter_R_new = 0;
+int deltaCounter_R;
+int deltaCounter_L;
 int lastStateCLK_R;
 int lastStateCLK_L;
+String currentDirRight;
+String currentDirLeft;
 
+//Keep track of time for both motors with these variables
+int tOldRight; // time old
+int tOldLeft;
+int tNewRight; // time new
+int tNewLeft;
+int deltaTRight = 0; // time new - time old
+int deltaTLeft = 0;
 
 
 // Controller parameters
-
 double Kp = 0;
 double Ki = 0;
 
@@ -71,37 +82,42 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   
-  
-
   //assign Pins I/O Logic
- 
-  
   pinMode(CLK_R, INPUT_PULLUP);
   pinMode(DT_R, INPUT_PULLUP);
   pinMode(CLK_L, INPUT_PULLUP);
   pinMode(DT_L, INPUT_PULLUP);
+
+  lastStateCLK_R = digitalRead(CLK_R);
+  lastStateCLK_L = digitalRead(CLK_L); 
   
-  
-  
+  //One interrupt per motor
   attachInterrupt(digitalPinToInterrupt(CLK_R), updateEncoder_R, CHANGE);
   attachInterrupt(digitalPinToInterrupt(CLK_L), updateEncoder_L, CHANGE);
 
+  //Motor Setup
   pinMode(TriStatePin, OUTPUT); 
   analogWrite(TriStatePin, 255); 
 
+  //Set up outputs
+  pinMode(Motor1VolLeft, OUTPUT);
+  pinMode(Motor1VolRight, OUTPUT);
+  pinMode(Motor1DirLeft, OUTPUT);
+  pinMode(Motor1DirRight, OUTPUT);
+  
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-  
-  
-  
   static double analogLeft = 0;
   static double analogRight = 0;
 
+  //Calculate Rho and Phi dot
+  float rhoDot = wheelRadius*(thetaDotRight + thetaDotLeft)*0.5;
+  float phiDot = wheelRadius*(thetaDotRight + thetaDotLeft)*0.86505190311;
+  
   //Controller
-  currentTime = millis();
+  currentTime = micros();
 
 
 
@@ -123,7 +139,7 @@ void updateEncoder_R(){
   currentStateCLK_R = digitalRead(CLK_R);
   int currentStateDT = digitalRead(DT_R);
   
-  int newTime = millis();
+  int newTime = micros();
   static int oldTime = 0; 
   
 
@@ -141,7 +157,7 @@ void updateEncoder_R(){
     double oldRad = rad_R;
 
     rad_R = (counter_R*2*PI)/800;
-    double deltaT = ((newTime-oldTime)*0.001);
+    double deltaT = ((newTime-oldTime)*0.000001);
     theta_dot_R = (rad_R - oldRad) / (double) deltaT; 
     
     
@@ -174,7 +190,7 @@ void updateEncoder_L(){
   currentStateCLK_L = digitalRead(CLK_L);
   int currentStateDT = digitalRead(DT_L);
 
-  int newTime = millis();
+  int newTime = micros();
   static int oldTime = 0; 
   
 
@@ -193,7 +209,7 @@ void updateEncoder_L(){
     double oldRad = rad_L;
 
     rad_L = (counter_L*2*PI)/800;
-    double deltaT = ((newTime-oldTime)*0.001);
+    double deltaT = ((newTime-oldTime)*0.000001);
     theta_dot_L = (rad_L - oldRad) / (double) deltaT; 
 
     
