@@ -146,7 +146,7 @@ void loop() {
       counterLeft = 0;
       counterRight = 0;
     }
-    moveDistance(9);
+    moveDistance(1);
   }
   
   
@@ -154,29 +154,30 @@ void loop() {
 
 void rotate(float desAngle){
   if(phi<desAngle+1 && phi>desAngle-1){
-    speedM1 = 0;
-    speedM2 = 0;
+    thetaDotRight = 0;
+    thetaDotLeft = 0;
     moveFlag++;
   }else if(phi<desAngle){
-    speedM1 = -65;
-    speedM2 = 65;
+    thetaDotRight = -65;
+    thetaDotLeft = 65;
   }else if(phi>desAngle){
-    speedM1 = 65;
-    speedM2 = -65;
+    thetaDotRight = 65;
+    thetaDotLeft = -65;
   }
-    md.setM1Speed(speedM1);
-    md.setM2Speed(speedM2);
+    analogWrite(motorVolRight,0);
+    analogWrite(motorVolLeft,0);
+    //md.setM2Speed(speedM2);
 }
 
 void moveDistance(float desDist){
   if(dist<desDist){
-      speedM1=100;
-      speedM2=100;
-    md.setM1Speed(speedM1);
-    md.setM2Speed(speedM2);
+      thetaDotRight=100;
+      thetaDotLeft=100;
+    digitalWrite(motorVolRight,0);
+    digitalWrite(motorVolLeft,0);
   }else{
-    md.setM1Speed(0);
-    md.setM2Speed(0);
+    digitalWrite(motorVolRight,0);
+    digital   Write(motorVolLeft,0);
   }
 }
 
