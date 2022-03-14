@@ -72,16 +72,23 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 10;
-double Ki = 3;
+double Kp = 11.5;
+double Ki = 3.5;
 
 double Kp_rho = 7.5; 
 
+<<<<<<< HEAD
 double phi_des = 3*PI/2; 
+=======
+double phi_des = PI; 
+>>>>>>> ee8c0aa648f0b02203e02341ffb6712f785689fa
 double rho_dot_des = 0; 
 double rho = 0;
-double rho_s = 5 - 0.175*5;
-//double rho_s = 5;
+//double rho_s = 3 - 0.3*3;
+//3ft 0.45
+//7ft 0.47
+
+double rho_s = 3;
 
 //******************************************************************************************
 
@@ -151,8 +158,8 @@ void PID_CONTROL(){
     double phi_curr = r* ((rad_L) - rad_R) / b; 
     phi_er = phi_des - phi_curr;
     phi_integral += phi_er;
-    Serial.print("phi_curr = ");
-    Serial.println(phi_curr);
+    //Serial.print("phi_curr = ");
+    //Serial.println(phi_curr);
 
     
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
@@ -160,11 +167,12 @@ void PID_CONTROL(){
 
     //Find how far we are from desired location.
 
-    if((abs(rho_s - rho) > 0.2) && (abs(phi_er < PI/64))){ //While not at desired position and wait two seconds for robot to orient correctly 
+    if((abs(rho_s - rho) > 0.2) && (abs(phi_er < PI/96))){ //While not at desired position and wait two seconds for robot to orient correctly 
      if(!goFoward){
       phi_des = phi_curr;
       phi_integral = 0;
       goFoward = true;
+      rho = 0; 
      }
      
      if(rho_s - rho > 0){
@@ -172,11 +180,11 @@ void PID_CONTROL(){
      } else{
       rho_dot_des = -20;
      }
-    } else if((abs(rho_s - rho) > 0.1) && abs(phi_er < PI/4)){
+    } else if((abs(rho_s - rho) > 0.1) && (abs(phi_er < PI/64))){
       rho_dot_des = 0; 
     }
-    //Serial.print("rho_dot = ");
-    //Serial.println(rho_dot_des);
+    Serial.print("rho_dot = ");
+    Serial.println(rho_dot_des);
 
 
     //Inner Loop w/Time
@@ -226,7 +234,7 @@ void PID_CONTROL(){
     }
 
 
-    analogWrite(MotorVoltRight,V1*0.8); 
+    analogWrite(MotorVoltRight,V1); 
     
 
 
