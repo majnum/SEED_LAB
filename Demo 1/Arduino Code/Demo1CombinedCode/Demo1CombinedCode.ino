@@ -77,11 +77,11 @@ double Ki = 3;
 
 double Kp_rho = 7.5; 
 
-double phi_des = PI/4; 
+double phi_des = -3*PI/2; 
 double rho_dot_des = 0; 
 double rho = 0;
-//double rho_s = 5 - 0.175*5;
-double rho_s = 5;
+double rho_s = 5 - 0.175*5;
+//double rho_s = 5;
 
 //******************************************************************************************
 
@@ -148,11 +148,11 @@ void PID_CONTROL(){
 
     static double phi_er;
     static double phi_integral = 0;
-    double phi_curr = r* (abs(rad_L) - rad_R) / b; 
+    double phi_curr = r* ((rad_L) - rad_R) / b; 
     phi_er = phi_des - phi_curr;
     phi_integral += phi_er;
-    //Serial.print("phi_curr = ");
-    //Serial.println(phi_curr);
+    Serial.print("phi_curr = ");
+    Serial.println(phi_curr);
 
     
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
