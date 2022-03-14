@@ -77,7 +77,7 @@ double Ki = 3;
 
 double Kp_rho = 7.5; 
 
-double phi_des = -3*PI/2; 
+double phi_des = 3*PI/2; 
 double rho_dot_des = 0; 
 double rho = 0;
 double rho_s = 5 - 0.175*5;
