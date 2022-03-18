@@ -1,3 +1,7 @@
+#This code initiaizes the camera and LCD systems attached to the Pi and their respective values.
+#After taking photos in regular periods, this code filters the immage for the blue tape markings, then determines the angle of those markings.
+#These angles are then converted into messages that are sent to the LCD display.
+
 from picamera import PiCamera
 import cv2 as cv
 import numpy as np
@@ -7,7 +11,6 @@ import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
 import smbus2 as smbus
 import board
 import math
-
 
 # Modify this if you have a different sized Character LCD
 lcd_columns = 16
@@ -179,10 +182,11 @@ while(1):
     else:
         distanceToTape = -1  #made an oopsie if this happens
     
-    
+    #Create the angle message to send to the LCD through I2C 
     message = "Angle:" + str(angleX)[0:5:1]
     displayRes(message)
     
+    #Vals array holds the bytes to send to the Arduino
     vals = []
     if not math.isnan(angleX):
         for ch in str(angleX)[0:8:1]:
@@ -197,5 +201,4 @@ while(1):
     cv.imshow('sideBySide', sideBySide)
     cv.waitKey(1000)
     cv.destroyAllWindows()
-    #time.sleep(0.05)
     
