@@ -1,7 +1,10 @@
 //******************************************************************************************
 //Combined Arduino Code for Demo 1
 //******************************************************************************************
+//By Eli Ball & Joey Thurman
+//3/15/2022
 
+//This Program Allows the User to set a predefined direction to turn the robot and then have the robot move foward. 
 
 //******************************************************************************************
 //          GLOBAL VARIABLES
@@ -72,20 +75,32 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 11.5;
-double Ki = 3.5;
+double Kp = 8.5;
+double Ki = 6.5;
 
 double Kp_rho = 10.5; 
 
 double phi_des = PI*.5; 
 
+
+
+//Angle Desired
+double phi_des = -1*PI/2; 
+
+//Distance Desired 
+double rho_s = 3;
+
+//Distance Vars
+
 double rho_dot_des = 0; 
 double rho = 0;
+
 //double rho_s = 3 - 0.3*3;
 //3ft 0.45
 //7ft 0.47
+//1.65
 
-double rho_s = 1.5;
+
 
 //******************************************************************************************
 
@@ -123,9 +138,6 @@ void loop() {
   // put your main code here, to run repeatedly:
   //static double analogLeft = 0;
   //static double analogRight = 0;
-
- 
-  //Calculate Rho and Phi dot
   
   
   //Controller
@@ -152,7 +164,10 @@ void PID_CONTROL(){
 
     static double phi_er;
     static double phi_integral = 0;
-    double phi_curr = r* abs((rad_L) - rad_R) / b; 
+
+    //double phi_curr = r* abs((rad_L) - rad_R) / b; 
+
+    double phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
     phi_integral += phi_er;
     //Serial.print("phi_curr = ");
@@ -162,9 +177,9 @@ void PID_CONTROL(){
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
 
 
-    //Find how far we are from desired location.
+    //Find how far we are from desired location and decide if to keep moving.
 
-    if((abs(rho_s - rho) > 0.2) && (abs(phi_er < PI/96))){ //While not at desired position and wait two seconds for robot to orient correctly 
+    if((abs(rho_s - rho) > 0.2) && (abs(phi_er) < PI/128)){ //While not at desired position wait to go foward.  
      if(!goFoward){
       phi_des = phi_curr;
       phi_integral = 0;
@@ -177,11 +192,14 @@ void PID_CONTROL(){
      } else{
       rho_dot_des = -20;
      }
-    } else if((abs(rho_s - rho) > 0.1) && (abs(phi_er < PI/64))){
+   
+    } else{
       rho_dot_des = 0; 
     }
-    Serial.print("rho_dot = ");
-    Serial.println(rho_dot_des);
+
+    
+    //Serial.print("rho_dot = ");
+    //Serial.println(rho);
 
 
     //Inner Loop w/Time
@@ -205,7 +223,7 @@ void PID_CONTROL(){
     
     //Phi dot control 
     static double phi_dot_er;
-    phi_dot_er = (r * (abs(theta_dot_R) - theta_dot_L) / (double) b);
+    phi_dot_er = (r * ((theta_dot_R) - theta_dot_L) / (double) b);
     phi_dot_er = phi_dot_des - phi_dot_er;
 
 
@@ -223,7 +241,8 @@ void PID_CONTROL(){
     }else{
       digitalWrite(MotorDirRight, LOW);
     }
-    
+
+    //Convert to PWM friendly value.
     V1 = abs(V1);
     
     if(V1 > 255){
@@ -244,7 +263,8 @@ void PID_CONTROL(){
     }else{
       digitalWrite(MotorDirLeft, HIGH);
     }
-    
+
+    //Convert to PWM friendly value.
     V2 = abs(V2);
     
     if(V2 > 255){
@@ -256,12 +276,12 @@ void PID_CONTROL(){
 
 
     //Keep Track of Position
-    rho = rho + rho_dot_curr*0.0001;
+    rho = rho - rho_dot_curr*0.0001;
      
 
 
 
-    while(innerLoopTime + micros() < 100); 
+    while(innerLoopTime + micros() < 100);  //Timing For Inner Control Loop -- 100 Microseconds each
     //End Inner Loop
 
     }
@@ -272,7 +292,7 @@ void PID_CONTROL(){
 
     
 
-    while(outerLoopTime + micros() <  500);
+    while(outerLoopTime + micros() <  500); //Timing for outer Loop control -- 500 microseconds each.
     //End Outer Loop 
 }
 
