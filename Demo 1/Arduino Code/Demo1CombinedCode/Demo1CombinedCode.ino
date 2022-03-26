@@ -75,20 +75,17 @@ int deltaTLeft = 0;
 double Kp = 11.5;
 double Ki = 3.5;
 
-double Kp_rho = 7.5; 
+double Kp_rho = 10.5; 
 
-<<<<<<< HEAD
-double phi_des = 3*PI/2; 
-=======
-double phi_des = PI; 
->>>>>>> ee8c0aa648f0b02203e02341ffb6712f785689fa
+double phi_des = PI*.5; 
+
 double rho_dot_des = 0; 
 double rho = 0;
 //double rho_s = 3 - 0.3*3;
 //3ft 0.45
 //7ft 0.47
 
-double rho_s = 3;
+double rho_s = 1.5;
 
 //******************************************************************************************
 
@@ -155,7 +152,7 @@ void PID_CONTROL(){
 
     static double phi_er;
     static double phi_integral = 0;
-    double phi_curr = r* ((rad_L) - rad_R) / b; 
+    double phi_curr = r* abs((rad_L) - rad_R) / b; 
     phi_er = phi_des - phi_curr;
     phi_integral += phi_er;
     //Serial.print("phi_curr = ");
