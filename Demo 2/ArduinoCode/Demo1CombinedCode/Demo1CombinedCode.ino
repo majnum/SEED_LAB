@@ -1,8 +1,8 @@
 //******************************************************************************************
-//Combined Arduino Code for Demo 1
+//Combined Arduino Code for Demo 2
 //******************************************************************************************
 //By Eli Ball & Joey Thurman
-//3/15/2022
+//4/1/2022
 
 //This Program Allows the User to set a predefined direction to turn the robot and then have the robot move foward. 
 
@@ -80,25 +80,23 @@ double Ki = 6.5;
 
 double Kp_rho = 10.5; 
 
-double phi_des = PI*.5; 
+
 
 
 
 //Angle Desired
-double phi_des = -1*PI/2; 
+double phi_des = 0; 
 
 //Distance Desired 
-double rho_s = 3;
+double rho_s = 0;
 
 //Distance Vars
 
 double rho_dot_des = 0; 
 double rho = 0;
 
-//double rho_s = 3 - 0.3*3;
-//3ft 0.45
-//7ft 0.47
-//1.65
+//Finite State Machine 
+short int STATE = 0; 
 
 
 
@@ -140,7 +138,34 @@ void loop() {
   //static double analogRight = 0;
   
   
-  //Controller
+  //Controller -- With States to Determine Performance - State Changes from Pi. 
+  switch(STATE){
+    case 0:
+     
+      phi_des  = PI-0.5
+      rho_s = 0;
+       break;
+       
+    case 2:
+
+      //Distance and Angle Set by the Pi
+    
+      break;
+    case 3:
+      break;
+    case 4:
+      break;
+    case 5:
+      break; 
+    default:
+
+      phi_des  = PI-0.5
+      rho_s = 0;
+      
+      break;
+    }
+
+  
   PID_CONTROL(); 
 
 
@@ -158,7 +183,7 @@ void loop() {
 void PID_CONTROL(){
     // Outer Loop Time
     int outerLoopTime = micros();
-    static bool goFoward = false;
+    
     
     //Phi to phidot control 
 
@@ -179,23 +204,31 @@ void PID_CONTROL(){
 
     //Find how far we are from desired location and decide if to keep moving.
 
-    if((abs(rho_s - rho) > 0.2) && (abs(phi_er) < PI/128)){ //While not at desired position wait to go foward.  
-     if(!goFoward){
-      phi_des = phi_curr;
-      phi_integral = 0;
-      goFoward = true;
-      rho = 0; 
-     }
-     
-     if(rho_s - rho > 0){
-      rho_dot_des = 20;
-     } else{
-      rho_dot_des = -20;
-     }
-   
-    } else{
-      rho_dot_des = 0; 
-    }
+    //New Outer Loop Control of Rho
+
+    static double rho_er;
+    rho_er  = rho_s - rho;
+    rho_dot_des = rho_er * Kp_rho; 
+    
+    
+//
+//    if((abs(rho_s - rho) > 0.2) && (abs(phi_er) < PI/128)){ //While not at desired position wait to go foward.  
+//     if(!goFoward){
+//      phi_des = phi_curr;
+//      phi_integral = 0;
+//      goFoward = true;
+//      rho = 0; 
+//     }
+//     
+//     if(rho_s - rho > 0){
+//      rho_dot_des = 20;
+//     } else{
+//      rho_dot_des = -20;
+//     }
+//   
+//    } else{
+//      rho_dot_des = 0; 
+//    }
 
     
     //Serial.print("rho_dot = ");
