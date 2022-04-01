@@ -42,6 +42,12 @@ double velocityError = 0;
 double rad_L = 0;
 double rad_R = 0;
 
+//X and Y Position
+long int x = 0;
+long int y = 0; 
+
+
+
 
 //wheel constants
 float r = 0.24479; // radius of wheel as a fraction of one foot
@@ -141,28 +147,41 @@ void loop() {
   //Controller -- With States to Determine Performance - State Changes from Pi. 
   switch(STATE){
     case 0:
-     
-      phi_des  = PI-0.5
+        //Don't Change
+      break;
+    case 1:
+     //Find Tape
+      phi_des  = PI-0.5;
       rho_s = 0;
        break;
        
     case 2:
 
+      //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
     
-      break;
-    case 3:
-      break;
-    case 4:
-      break;
-    case 5:
-      break; 
-    default:
-
-      phi_des  = PI-0.5
-      rho_s = 0;
+        break;
+      case 3:
+      //Reorient to line up to travel along tape.
+      rho_s = rho; 
       
-      break;
+        break;
+      case 4:
+        //Move to the end of the tape.
+        break;
+
+      case 5: //STOP MOVING!
+        rho_s = rho;
+        phi_des = r* ((rad_R) - rad_L) / b;
+
+      
+        break;
+      
+      default: //Data Error
+
+     
+      
+        break;
     }
 
   
@@ -309,7 +328,11 @@ void PID_CONTROL(){
 
 
     //Keep Track of Position
-    rho = rho - rho_dot_curr*0.0001;
+    rho = rho + rho_dot_curr*0.0001;
+
+    x = x + rho_dot_curr*0.0001*cos(phi_curr);
+    y = y + rho_dot_curr*0.0001*sin(phi_curr);
+
      
 
 
