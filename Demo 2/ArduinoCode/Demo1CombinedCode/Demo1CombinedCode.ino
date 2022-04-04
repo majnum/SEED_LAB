@@ -30,7 +30,7 @@
 
 //I2C communication variables
 int read_offset = 0;
-int state = 0;
+short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
 int dist = 0;
@@ -114,9 +114,8 @@ double rho_s = 0;
 
 double rho_dot_des = 0; 
 double rho = 0;
-
-//Finite State Machine 
-short int STATE = 0; 
+ 
+ 
 
 
 
@@ -237,7 +236,7 @@ void receiveData(int byteCount){
     
     //Break array into parts
     int j = 0;
-    state = in_data[j];
+    STATE = in_data[j];
     String now = ""; 
 
     //Get the distance
