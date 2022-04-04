@@ -1,7 +1,7 @@
 //******************************************************************************************
 //Combined Arduino Code for Demo 2
 //******************************************************************************************
-//By Eli Ball & Joey Thurman
+//By Eli Ball & Joey Thurman & Joshua Higgins
 //4/1/2022
 
 //This Program Allows the User to set a predefined direction to turn the robot and then have the robot move foward. 
@@ -9,6 +9,8 @@
 //******************************************************************************************
 //          GLOBAL VARIABLES
 //******************************************************************************************
+
+#include <Wire.h>
 
 //Define Motor Pins
 #define TriStatePin    4
@@ -22,6 +24,18 @@
 #define DT_R   6
 #define CLK_L  3    //Uses Interuppt pin
 #define DT_L   11
+
+//I2C communication constant
+#define SLAVE_ADDRESS 0x04
+
+//I2C communication variables
+int read_offset = 0;
+int state = 0;
+int len = 0;
+int in_data[32] = {};
+int dist = 0;
+float ang = 0; 
+
 
 
 
@@ -112,6 +126,18 @@ short int STATE = 0;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+
+  //I2C pin assignment
+  pinMode(13, OUTPUT);
+
+  //initialize i2c as slave
+  Wire.begin(SLAVE_ADDRESS);
+
+  //define callabcks for i2c communication
+  Wire.onReceive(receiveData);
+  Wire.onRequest(sendData);
+  Serial.println("Ready!");
+  
   
   //assign Pins I/O Logic
   pinMode(CLK_R, INPUT_PULLUP);
@@ -193,6 +219,60 @@ void loop() {
   
  
 
+}
+
+//Recieve data across the i2c bus in the form of (state: 1 byte)(dist: 3 bytes)(angle: 20 bytes)
+void receiveData(int byteCount){
+  int i = 0;
+  if(byteCount > 1){
+    while(Wire.available()){
+      in_data[i] = Wire.read();
+      Serial.print(in_data[i]);
+      Serial.print(' ');
+      i++;
+    }
+    Serial.print(' ');
+    i--;
+    len = i;
+    
+    //Break array into parts
+    int j = 0;
+    state = in_data[j];
+    String now = ""; 
+
+    //Get the distance
+    for (j = 1; j < 4; j++){
+      now = now + char(in_data[j]);
+    }
+    dist = now.toInt();
+
+
+    now = "";
+    for (j = 4; j < 21; j++){
+        now = now + char(in_data[j]);
+    }
+    ang = now.toFloat();
+ 
+  }
+  else{
+    read_offset = Wire.read();
+  }
+}  
+
+//Send data across the i2c bus
+void sendData(){
+  byte data[32] = {};
+  if(read_offset == in_data[0]){
+    int j = 30;
+    for(int i = 1; i < 32; i++){
+      int val = in_data[i];
+      if(val != 0){
+        data[j] = in_data[i];
+      }
+       j--;
+    }
+  }
+  Wire.write(data, 32);
 }
 
 
