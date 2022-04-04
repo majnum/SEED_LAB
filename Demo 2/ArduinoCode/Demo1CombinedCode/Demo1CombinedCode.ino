@@ -184,15 +184,43 @@ void loop() {
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
+      phi_des = ang;
+      
+
+      if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
+        rho = 0; 
+        rho_s = (double) dist / 12.0;  
+      }else
+        rho_s = 1;
+        if(rho_s - rho < 0.1){
+          STATE = 5; 
+        }
+      }
+     
     
+        
         break;
       case 3:
       //Reorient to line up to travel along tape.
-      rho_s = rho; 
+      
+      rho_s = rho;
+      phi_des = ang;  
       
         break;
       case 4:
         //Move to the end of the tape.
+
+      if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
+        rho = 0; 
+        rho_s = (double) dist / 12.0;  
+      }else
+        rho_s = 1;
+        if(rho_s - rho < 0.1){
+          STATE = 5; 
+        }
+      }
+      
+        
         break;
 
       case 5: //STOP MOVING!
