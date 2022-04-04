@@ -11,6 +11,7 @@ import smbus2 as smbus
 import board
 import math
 
+
 # Initialise I2C bus.
 i2c = board.I2C()  # uses board.SCL and board.SDA
 
@@ -26,6 +27,32 @@ def writeNumber(value, offset):
     return -1
 
 #function that reads a byte array off of the I2C wire
+def readNumber(offset):
+    number = bus.read_i2c_block_data(address, offset, 32)
+    return number
+
+#(state:1byte)(distance:3bytes)(angle:20bytes)
+def buildPackage(dist=0, angle=0, act=0):
+    pack = []
+    
+    #Fill pack
+    pack[0] = act
+    str_dist = str(dist)
+    str_ang = str(angle)
+    i = 1
+
+    for d in str_dist:
+        pack[i]
+        i = i + 1
+
+    for d in str_ang:
+        pack[i]
+        i = i + 1
+
+    #Send the byte package
+    writeNumber(pack, 0)
+
+
 def readNumber(offset):
     number = bus.read_i2c_block_data(address, offset, 32)
     return number
@@ -75,15 +102,15 @@ minDistance = 100000
 while(1):
     camera.capture('pic.jpg')
     img = cv.imread('pic.jpg')
-    img = img[250:1080, 0:400]
+    #img = img[250:1080, 0:400]
     #cv.imshow('img', crop)
     #cv.waitKey(0)
     #cv.destroyAllWindows()
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (100, 60, 70)
-    upperBound = (140, 255, 255)
+    lowerBound = (100, 105, 55)
+    upperBound = (140, 235, 140)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -107,29 +134,34 @@ while(1):
     yFov = 41.41
     
     #imgCenterX = closing.shape[1]/2
-    imgCenterY = closing.shape[0]
+    imgCenterY = closing.shape[0]/2
+    #print('img center y: ', imgCenterY)
     #centerToCenterX = avg[1] - imgCenterX
-    centerToCenterY = avg[0]# - imgCenterY <- since i cropped out top half of image
+    centerToCenterY = avg[0] - imgCenterY #<- since i cropped out top half of image
     #angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
-    angleY = (yFov / 2) * (centerToCenterY / imgCenterY) + 2.4 #plus 2.4 to correct any assembly errors
+    angleY = (yFov / 2) * (centerToCenterY / imgCenterY) #fudge
     
     #calculate approximate distance to tape center
-    #distanceToTape = sin(angleY)*cameraHypotenuse / (sin(90 - angleY - angleCam)
     angleCam = 13 #degrees
-    cameraHyp = 
-    if(angleY > 0):
-        distanceToTape = 6.875 / math.tan((abs(angleY)) * math.pi / 180)
-    else:
-        distanceToTape = -1  #made an oopsie if this happens
+    cameraHyp = 6.75 + 1.3 #fudge
+    distanceToTape = math.sin(math.radians(90 - angleY)) * cameraHyp / (math.sin(math.radians(angleY + angleCam)))
         
-    print(distanceToTape)
-    distanceList.append(distanceToTape)
-    minDistanceIndex = distanceList.index(min(distanceList))
-       
     print('Y angle: ', angleY)
-    print('distance: ', min(distanceList))
+    print('this distance: ', distanceToTape)
+    #print('math.sin(angleY): ', math.sin((angleY)))
+
+    #adding distanceJustFound to list keeping track of all distances found
+    distanceList.append(distanceToTape)
+    #finding index of smallest distance
+    minDistanceIndex = distanceList.index(min(distanceList))
+      
+    #print('min distance: ', min(distanceList))
     
-    cv.imshow('sideBySide', sideBySide)
-    cv.waitKey(1000)
-    cv.destroyAllWindows()
+    #cv.imshow('sideBySide', sideBySide)
+    #cv.waitKey(1000)
+    #cv.destroyAllWindows()
+    #buildPackage(int(distanceToTape), 0, 0)
+    #time.sleep(0.01)
+    
+
     
