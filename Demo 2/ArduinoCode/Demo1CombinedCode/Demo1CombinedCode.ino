@@ -55,6 +55,7 @@ double velocityError = 0;
 //angle position variables
 double rad_L = 0;
 double rad_R = 0;
+double phi_curr = 0; 
 
 //X and Y Position
 long int x = 0;
@@ -318,7 +319,7 @@ void PID_CONTROL(){
 
     //double phi_curr = r* abs((rad_L) - rad_R) / b; 
 
-    double phi_curr = r* ((rad_R) - rad_L) / b; 
+    phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
     phi_integral += phi_er;
     //Serial.print("phi_curr = ");
