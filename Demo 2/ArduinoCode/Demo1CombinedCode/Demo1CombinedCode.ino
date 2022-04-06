@@ -271,19 +271,19 @@ void receiveData(int byteCount){
     len = i;
     
     //Break array into parts
-    int j = 0;
+    int j = 1;
     STATE = in_data[j];
     String now = ""; 
 
     //Get the distance
-    for (j = 1; j < 4; j++){
+    for (j = 2; j < 5; j++){
       now = now + char(in_data[j]);
     }
     dist = now.toInt();
 
 
     now = "";
-    for (j = 4; j < 21; j++){
+    for (j = 5; j < 22; j++){
         now = now + char(in_data[j]);
     }
     ang = now.toFloat();
@@ -296,18 +296,18 @@ void receiveData(int byteCount){
 
 //Send data across the i2c bus
 void sendData(){
-  byte data[32] = {};
-  if(read_offset == in_data[0]){
-    int j = 30;
-    for(int i = 1; i < 32; i++){
-      int val = in_data[i];
-      if(val != 0){
-        data[j] = in_data[i];
-      }
-       j--;
-    }
+  static byte data[32] = {};
+  for(int i = 0; i < 32; i++){
+    data[i] = 0;
   }
+  //Serial.println(counter);
+  //String start_val = String(counter);
+  //for(int i = 0; i < start_val.length(); i++){
+    //data[i] = (int)start_val[i];
+  //}
+  //delay(200);
   Wire.write(data, 32);
+  //Wire.write(data, 32);
 }
 
 
