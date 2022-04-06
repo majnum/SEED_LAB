@@ -36,18 +36,18 @@ def buildPackage(dist=0, angle=0, act=0):
     pack = []
     
     #Fill pack
-    pack[0] = act
+    pack.append(act)
     str_dist = str(dist)
     str_ang = str(angle)
-    i = 1
+    #i = 1
 
     for d in str_dist:
-        pack[i]
-        i = i + 1
+        pack.append(int(d))
+        #i = i + 1
 
     for d in str_ang:
-        pack[i]
-        i = i + 1
+        pack.append(int(d))
+        #i = i + 1
 
     #Send the byte package
     writeNumber(pack, 0)
@@ -65,7 +65,13 @@ def imgDisp(imgname, img):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-camera = PiCamera(resolution = (400, 1080), framerate = 30)
+state = 1 #360 degree sweep
+
+if state == 1:
+    camera = PiCamera(resolution = (400, 1080), framerate = 30)
+else:
+    camera = PiCamera()
+    
 
 #set camera to only pick up middle slices - avoids picking up table legs as tape
 #everytime blue is found, calculate distance, store in array
@@ -102,15 +108,15 @@ minDistance = 100000
 while(1):
     camera.capture('pic.jpg')
     img = cv.imread('pic.jpg')
-    #img = img[250:1080, 0:400]
-    #cv.imshow('img', crop)
-    #cv.waitKey(0)
-    #cv.destroyAllWindows()
+    #set top couple rows of pixels to black to avoid picking up anything not the floor
+    img[0:260, 0:img.shape[1]] = (0, 0, 0)
+    #cv.imwrite('croptest.jpg', img)
+    
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (100, 105, 55)
-    upperBound = (140, 235, 140)
+    lowerBound = (75, 70, 90)
+    upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -130,16 +136,17 @@ while(1):
     avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
     
     #calculating angle
-    #xFov = 53.5
-    yFov = 41.41
-    
-    #imgCenterX = closing.shape[1]/2
-    imgCenterY = closing.shape[0]/2
-    #print('img center y: ', imgCenterY)
-    #centerToCenterX = avg[1] - imgCenterX
+    xFov = 53.5
+    yFov = 41.41    
+    imgCenterX = closing.shape[1]/2
+    imgCenterY = closing.shape[0]/2    
+    centerToCenterX = avg[1] - imgCenterX
     centerToCenterY = avg[0] - imgCenterY #<- since i cropped out top half of image
-    #angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
+    angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
     angleY = (yFov / 2) * (centerToCenterY / imgCenterY) #fudge
+    
+    if state == 1: #xFov will be all janky for sweep state, so avoid x angle calculation
+        angleX = -1
     
     #calculate approximate distance to tape center
     angleCam = 13 #degrees
@@ -154,6 +161,8 @@ while(1):
     distanceList.append(distanceToTape)
     #finding index of smallest distance
     minDistanceIndex = distanceList.index(min(distanceList))
+    
+    buildPackage(72, 10, 1)
       
     #print('min distance: ', min(distanceList))
     

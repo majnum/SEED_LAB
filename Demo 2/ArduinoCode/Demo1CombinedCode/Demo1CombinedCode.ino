@@ -61,7 +61,8 @@ double phi_curr = 0;
 long int x = 0;
 long int y = 0; 
 
-
+void receiveData(int byteCount);
+void sendData();
 
 
 //wheel constants
@@ -100,6 +101,7 @@ double Kp = 8.5;
 double Ki = 6.5;
 
 double Kp_rho = 10.5; 
+double Ki_rho = 5.5;
 
 
 
@@ -177,8 +179,11 @@ void loop() {
       break;
     case 1:
      //Find Tape
-      phi_des  = PI-0.5;
+      phi_des  = PI;
+      
       rho_s = 0;
+      rho = 0;
+      
        break;
        
     case 2:
@@ -191,12 +196,14 @@ void loop() {
       if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
         rho = 0; 
         rho_s = (double) dist / 12.0;  
-      }else
+      }else{
         rho_s = 1;
         if(rho_s - rho < 0.1){
           STATE = 5; 
         }
-      }
+       }
+  
+      
      
     
         
@@ -214,7 +221,7 @@ void loop() {
       if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
         rho = 0; 
         rho_s = (double) dist / 12.0;  
-      }else
+      }else{
         rho_s = 1;
         if(rho_s - rho < 0.1){
           STATE = 5; 
@@ -334,8 +341,14 @@ void PID_CONTROL(){
     //New Outer Loop Control of Rho
 
     static double rho_er;
+    static double rho_integral = 0;
+    
     rho_er  = rho_s - rho;
-    rho_dot_des = rho_er * Kp_rho; 
+    rho_integral += rho_er;
+
+    
+    rho_dot_des = rho_er * Kp_rho  + Ki_rho * rho_integral*0.001; 
+    
     
     
 //
