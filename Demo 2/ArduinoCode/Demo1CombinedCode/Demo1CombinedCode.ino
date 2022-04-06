@@ -179,10 +179,16 @@ void loop() {
       break;
     case 1:
      //Find Tape
-      phi_des  = PI;
+      phi_des  = 1.75*PI;
       
       rho_s = 0;
       rho = 0;
+
+
+      if(phi_curr > phi_des){
+        //Send Pi Flag it is time to Transisition
+        
+      }
       
        break;
        
