@@ -30,11 +30,11 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 0;//Finite State Machine
+short int STATE = 2;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
-int dist = 0;
-float ang = 0; 
+int dist = 18;
+float ang = 0.4; 
 
 
 
@@ -173,6 +173,9 @@ void loop() {
   
   
   //Controller -- With States to Determine Performance - State Changes from Pi. 
+  Serial.print("State: ");
+  Serial.println(STATE);
+  
   switch(STATE){
     case 0:
         //Don't Change
@@ -187,7 +190,7 @@ void loop() {
 
       if(phi_curr > phi_des){
         //Send Pi Flag it is time to Transisition
-        
+        //Send 10.69 to pi
       }
       
        break;
@@ -196,24 +199,23 @@ void loop() {
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
-      phi_des = ang;
+      
+      
+       
       
 
-      if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
-        rho = 0; 
-        rho_s = (double) dist / 12.0;  
-      }else{
-        rho_s = 1;
-        if(rho_s - rho < 0.1){
-          STATE = 5; 
-        }
-       }
-  
-      
-     
-    
+      if((double) dist  < 10){// TODO Change based on where camera loses sight. 
+        
+        rho_s = (double) 10.0 /12.0;
+        ang = 0; 
+           
+        
+      }
+      phi_des = phi_curr + ang;
+      rho_s = (double) dist / 12.0; 
         
         break;
+        
       case 3:
       //Reorient to line up to travel along tape.
       
@@ -225,8 +227,9 @@ void loop() {
         //Move to the end of the tape.
 
       if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
-        rho = 0; 
+         
         rho_s = (double) dist / 12.0;  
+        
       }else{
         rho_s = 1;
         if(rho_s - rho < 0.1){
@@ -238,7 +241,9 @@ void loop() {
         break;
 
       case 5: //STOP MOVING!
-        rho_s = rho;
+        
+         
+        
         phi_des = r* ((rad_R) - rad_L) / b;
 
       
@@ -348,10 +353,14 @@ void PID_CONTROL(){
 
     static double rho_er;
     static double rho_integral = 0;
+
+    rho = r * (abs(rad_R + rad_L) / 2.0);
     
     rho_er  = rho_s - rho;
     rho_integral += rho_er;
 
+    Serial.print("rho_curr = ");
+    Serial.println(rho);
     
     rho_dot_des = rho_er * Kp_rho  + Ki_rho * rho_integral*0.001; 
     
@@ -455,12 +464,12 @@ void PID_CONTROL(){
 
 
     //Keep Track of Position
-    rho = rho + rho_dot_curr*0.0001;
+    
 
     x = x + rho_dot_curr*0.0001*cos(phi_curr);
     y = y + rho_dot_curr*0.0001*sin(phi_curr);
 
-     
+    
 
 
 
@@ -469,8 +478,8 @@ void PID_CONTROL(){
 
     }
 
-
-
+    
+   
 
 
     
