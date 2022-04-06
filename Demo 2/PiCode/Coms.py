@@ -45,6 +45,71 @@ def buildPackage(dist, angle, act):
     writeNumber(pack, 0)
 
 
-def readNumber(offset):
+def readNumber(offset=0):
     number = bus.read_i2c_block_data(address, offset, 32)
     return number
+
+
+#Initial State Machine!
+stage = 0
+
+#IDLE
+if stage == -1:
+   stage = readnumber
+
+#Initialize
+if stage == 0:
+   distance = []
+   angle = []
+   cnt = 0
+   stage = 1
+
+#Localize
+if stage == 1:
+   buildPackage(0, 0, 0)
+   #Dylan's code goes here (Take vertical line photos and calc dist)
+
+   #End Dylan's code
+   distance.append(dist)
+   ang = readNumber()
+   angle.append(ang)
+
+   if ang > 360:
+      stage = 2
+
+#Turn to tape and go forward
+if stage == 2:
+   min = 300
+   i = -1
+   ind = 0
+   for d in distance:
+       i = i + 1
+       if d < min:
+           min = d
+           ind = i
+
+   buildPackage(distance[i],angle[i],1)
+   stage = -1
+   
+#Begin feedback cycle between camera and arduino
+if stage == 3:
+   #Dylan's code here (Wide view providing angle and distance)
+
+   #End Dylan's code
+   if dist == Nan:
+      stage = 4
+   else:
+      buildPackage(dist,ang,2)
+
+#Continue when tape becomes not visable (~1ft)
+if stage == 4:
+   buildPackage(0,0,3)
+
+   
+
+   
+   
+	
+
+
+   
