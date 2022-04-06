@@ -53,7 +53,11 @@ def readNumber(offset=0):
 #Initial State Machine!
 stage = 0
 
-#IDLE
+#IDLE2
+if stage == -2:
+   Time.sleep(0.1)
+
+#IDLE1
 if stage == -1:
    stage = readnumber
 
@@ -74,7 +78,7 @@ if stage == 1:
    ang = readNumber()
    angle.append(ang)
 
-   if ang > 360:
+   if ang == 10.69:
       stage = 2
 
 #Turn to tape and go forward
@@ -104,6 +108,7 @@ if stage == 3:
 #Continue when tape becomes not visable (~1ft)
 if stage == 4:
    buildPackage(0,0,3)
+   
 
    
 
