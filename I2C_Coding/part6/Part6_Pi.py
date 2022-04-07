@@ -12,25 +12,28 @@ lcd_rows = 2
 i2c = board.I2C()  # uses board.SCL and board.SDA
 
 # Initialise the LCD class
-lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
-lcd.color = [0, 0, 0]
-lcd.clear()
+#lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
+#lcd.color = [0, 0, 0]
+#lcd.clear()
 
 def displayRes(sent, received):
-    lcd.clear()
+    pass
+    #lcd.clear()
     # Set LCD color to green
-    lcd.color = [0, 100, 0]
-    message = "Sent:  " + str(sent) + "\nGot:  " + str(received) 
-    lcd.message = message
+    #lcd.color = [0, 100, 0]
+    #message = "Sent:  " + str(sent) + "\nGot:  " + str(received) 
+    #lcd.message = message
 
 def displayReset():
-    lcd.clear()
+    pass
+    #lcd.clear()
     # Set LCD color to green
-    lcd.color = [0, 100, 0]
+    #lcd.color = [0, 100, 0]
 
 def displayNum(val):
-    lcd.message = "                                "                       
-    lcd.message = val
+    pass
+    #lcd.message = "                                "                       
+    #lcd.message = val
 
 # for RPI version 1, use “bus = smbus.SMBus(0)”
 bus = smbus.SMBus(1)
@@ -54,8 +57,10 @@ while True:
     time.sleep(1)
     
     number = readNumber(0)
+    print(number)
     message = ""
     for num in number:
         if num != 0:
-            message = message + chr(num)        
-    displayNum(message)
+            message = message + chr(num)
+            
+    #displayNum(message)

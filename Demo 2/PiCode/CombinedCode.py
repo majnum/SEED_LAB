@@ -114,7 +114,7 @@ while(1):
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (80, 65, 20)
+    lowerBound = (80, 25, 20)
     upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)

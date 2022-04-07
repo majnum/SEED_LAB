@@ -31,10 +31,12 @@ void sendData(){
   for(int i = 0; i < 32; i++){
     data[i] = 0;
   }
+  /*
   String start_val = String(analogRead(sensorPin));
   for(int i = 0; i < start_val.length(); i++){
     data[i] = (int)start_val[i];
   }
+  */
   //delay(200);
   Wire.write(data, 32);
   
