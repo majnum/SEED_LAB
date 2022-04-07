@@ -29,7 +29,7 @@ void receiveData(int byteCount){
 void sendData(){
   static byte data[32] = {};
   for(int i = 0; i < 32; i++){
-    data[i] = 0;
+    data[i] = 1;
   }
   /*
   String start_val = String(analogRead(sensorPin));
