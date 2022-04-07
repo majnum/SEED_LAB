@@ -173,8 +173,8 @@ void loop() {
   
   
   //Controller -- With States to Determine Performance - State Changes from Pi. 
-  Serial.print("State: ");
-  Serial.println(STATE);
+  //Serial.print("State: ");
+  //Serial.println(STATE);
   
   switch(STATE){
     case 0:
@@ -277,7 +277,7 @@ void receiveData(int byteCount){
       Serial.print(' ');
       i++;
     }
-    Serial.print(' ');
+    Serial.print('\n');
     i--;
     len = i;
     
@@ -359,8 +359,8 @@ void PID_CONTROL(){
     rho_er  = rho_s - rho;
     rho_integral += rho_er;
 
-    Serial.print("rho_curr = ");
-    Serial.println(rho);
+    //Serial.print("rho_curr = ");
+    //Serial.println(rho);
     
     rho_dot_des = rho_er * Kp_rho  + Ki_rho * rho_integral*0.001; 
     
