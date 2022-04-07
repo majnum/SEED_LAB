@@ -1,7 +1,18 @@
-#This code initiaizes the camera and LCD systems attached to the Pi and their respective values.
-#After taking photos in regular periods, this code filters the immage for the blue tape markings, then determines the angle of those markings.
-#These angles are then converted into messages that are sent to the LCD display.
-
+##This code initiaizes the camera and LCD systems attached to the Pi and their respective values.
+##After taking photos in regular periods, this code filters the immage for the blue tape markings, then determines the angle of those markings.
+##These angles are then converted into messages that are sent to the LCD display.
+#
+#from picamera import PiCamera
+#import cv2 as cv
+#import numpy as np
+#import time
+#import glob
+#import smbus2 as smbus
+#import board
+#import math#This code initiaizes the camera and LCD systems attached to the Pi and their respective values.
+##After taking photos in regular periods, this code filters the immage for the blue tape markings, then determines the angle of those markings.
+##These angles are then converted into messages that are sent to the LCD display.
+#
 from picamera import PiCamera
 import cv2 as cv
 import numpy as np
@@ -10,8 +21,8 @@ import glob
 import smbus2 as smbus
 import board
 import math
-
-
+#
+#
 # Initialise I2C bus.
 i2c = board.I2C()  # uses board.SCL and board.SDA
 
@@ -20,19 +31,23 @@ bus = smbus.SMBus(1)
 
 # This is the address we setup in the Arduino Program
 address = 0x04
-
+#
 #function that writes a byte array to the I2C wire
 def writeNumber(value, offset):
     try:
         bus.write_i2c_block_data(address, offset, value)
     except OSError:
-        print("I2C Error")
+        print("I2C Write Error")
         
     return -1
-
+#
 #function that reads a byte array off of the I2C wire
 def readNumber(offset=0):
-    number = bus.read_i2c_block_data(address, offset, 32)
+    try:
+        number = bus.read_i2c_block_data(address, offset, 32)
+    except OSError:
+        number = -1
+        print("I2C Read Error")
     return number
 
 #(state:1byte)(distance:3bytes)(angle:20bytes)
@@ -60,50 +75,50 @@ def buildPackage(dist=0, angle=0, act=0):
 
 def nothing(x):
     pass
-
-def imgDisp(imgname, img):
-    cv.imshow(imgname, img)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
-    
-
-#set camera to only pick up middle slices - avoids picking up table legs as tape
-#everytime blue is found, calculate distance, store in array
-#shortest distance will be the actual tape instead of blue desk legs/other noise
-
+#
+#def imgDisp(imgname, img):
+#    cv.imshow(imgname, img)
+#    cv.waitKey(0)
+#    cv.destroyAllWindows()
+#
+#    
+#
+##set camera to only pick up middle slices - avoids picking up table legs as tape
+##everytime blue is found, calculate distance, store in array
+##shortest distance will be the actual tape instead of blue desk legs/other noise
+#
 camera = PiCamera()
-
-#camera.start_preview()
-camera.iso = 200
-#time.sleep(2)
-#camera.shutter_speed = camera.exposure_speed
-#camera.exposure_mode = 'off'
-#camera.stop_preview()
-#take 4 calibration pictures
-#awbRed = [0, 0, 0, 0]
-#awbBlue = [0, 0, 0, 0]
-#for i in range(4):
-#    camera.capture('calibrationPic%d.jpg' %i)
-#    print(camera.awb_gains)
-#    (awbRed[i], awbBlue[i]) = camera.awb_gains
-#    time.sleep(0.5)
-#camera.awb_mode = 'fluorescent'
-    
-#averaging and setting the AWB values
-#camera.stop_preview()
-#avgRedAwb = sum(awbRed)/len(awbRed)
-#avgBlueAwb = sum(awbBlue)/len(awbBlue)
-#avgAwb = (avgRedAwb, avgBlueAwb)
-#camera.awb_mode = 'off'
-#camera.awb_gains = avgAwb
-
+#
+##camera.start_preview()
+#camera.iso = 200
+##time.sleep(2)
+##camera.shutter_speed = camera.exposure_speed
+##camera.exposure_mode = 'off'
+##camera.stop_preview()
+##take 4 calibration pictures
+##awbRed = [0, 0, 0, 0]
+##awbBlue = [0, 0, 0, 0]
+##for i in range(4):
+##    camera.capture('calibrationPic%d.jpg' %i)
+##    print(camera.awb_gains)
+##    (awbRed[i], awbBlue[i]) = camera.awb_gains
+##    time.sleep(0.5)
+##camera.awb_mode = 'fluorescent'
+#    
+##averaging and setting the AWB values
+##camera.stop_preview()
+##avgRedAwb = sum(awbRed)/len(awbRed)
+##avgBlueAwb = sum(awbBlue)/len(awbBlue)
+##avgAwb = (avgRedAwb, avgBlueAwb)
+##camera.awb_mode = 'off'
+##camera.awb_gains = avgAwb
+#
 distanceList = []
 minDistance = 100000
-
-
+#
+#
 stage = 0
-#find blue tape
+##find blue tape
 while(1):
     camera.capture('pic.jpg')
     img = cv.imread('pic.jpg')
@@ -180,7 +195,7 @@ while(1):
     if stage == -1:
        stage = readnumber
 
-    #Initialize
+   #Initialize
     if stage == 0:
        distance = []
        angle = []
@@ -189,12 +204,19 @@ while(1):
 
     #Localize
     if stage == 1:
-        buildPackage(72, 10, 1)
+        #pack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        #writeNumber(pack, 0)
+        time.sleep(1)
+        
+        number = readNumber(0)
+        print(number)
+        
+        buildPackage(0, 0, 1)
        #Dylan's code goes here (Take vertical line photos and calc dist)
         #camera = PiCamera(resolution = (400, 1080))
         camera.resolution = (2592, 1944)
        #End Dylan's code
-        distance.append(distanceToTape)
+        #distance.append(distanceToTape)
         #ang = readNumber(0)
         #angle.append(ang)
 
@@ -229,7 +251,5 @@ while(1):
     #Continue when tape becomes not visable (~1ft)
     if stage == 4:
        buildPackage(0,0,3)
-
-    
 
     
