@@ -23,7 +23,11 @@ address = 0x04
 
 #function that writes a byte array to the I2C wire
 def writeNumber(value, offset):
-    bus.write_i2c_block_data(address, offset, value)
+    try:
+        bus.write_i2c_block_data(address, offset, value)
+    except OSError:
+        print("I2C Error")
+        
     return -1
 
 #function that reads a byte array off of the I2C wire
@@ -62,24 +66,20 @@ def imgDisp(imgname, img):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-stage = 1 #360 degree sweep
-
-if stage == 1:
-    camera = PiCamera(resolution = (400, 1080), framerate = 30)
-else:
-    camera = PiCamera()
     
 
 #set camera to only pick up middle slices - avoids picking up table legs as tape
 #everytime blue is found, calculate distance, store in array
 #shortest distance will be the actual tape instead of blue desk legs/other noise
 
-camera.start_preview()
+camera = PiCamera()
+
+#camera.start_preview()
 camera.iso = 200
-time.sleep(2)
-camera.shutter_speed = camera.exposure_speed
-camera.exposure_mode = 'off'
-camera.stop_preview()
+#time.sleep(2)
+#camera.shutter_speed = camera.exposure_speed
+#camera.exposure_mode = 'off'
+#camera.stop_preview()
 #take 4 calibration pictures
 #awbRed = [0, 0, 0, 0]
 #awbBlue = [0, 0, 0, 0]
@@ -114,7 +114,7 @@ while(1):
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (75, 70, 90)
+    lowerBound = (80, 65, 20)
     upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
@@ -142,14 +142,14 @@ while(1):
     centerToCenterX = avg[1] - imgCenterX
     centerToCenterY = avg[0] - imgCenterY #<- since i cropped out top half of image
     angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
-    angleY = (yFov / 2) * (centerToCenterY / imgCenterY) #fudge
+    angleY = (yFov / 2) * (centerToCenterY / imgCenterY) 
     
     if stage == 1: #xFov will be all janky for sweep state, so avoid x angle calculation
         angleX = -1
     
     #calculate approximate distance to tape center
     angleCam = 13 #degrees
-    cameraHyp = 6.75 + 1.3 #fudge
+    cameraHyp = 6.75 + 1.3 #inches plus fudge
     distanceToTape = math.sin(math.radians(90 - angleY)) * cameraHyp / (math.sin(math.radians(angleY + angleCam)))
         
     print('Y angle: ', angleY)
