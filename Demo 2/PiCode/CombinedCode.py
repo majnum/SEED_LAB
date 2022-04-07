@@ -41,11 +41,12 @@ def buildPackage(dist=0, angle=0, act=0):
     str_ang = str(angle)
     i = 1
  
-    for d in str_dist:
+    for d in str_dist[0:3]:
         pack[i] = int(d)
         i = i + 1
 
-    for d in str_ang:
+    i = 4
+    for d in str_ang[0:20]:
         pack[i] = int(d)
         i = i + 1
 
