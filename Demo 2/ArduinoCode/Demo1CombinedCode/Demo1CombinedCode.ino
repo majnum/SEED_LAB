@@ -4,7 +4,7 @@
 //By Eli Ball & Joey Thurman & Joshua Higgins
 //4/1/2022
 
-//This Program Allows the User to set a predefined direction to turn the robot and then have the robot move foward. 
+//This Program Allows the Pi to set a predefined direction to turn the robot and then have the robot move foward based on data read in by the Pi's Camera.  
 
 //******************************************************************************************
 //          GLOBAL VARIABLES
@@ -33,8 +33,8 @@ int read_offset = 0;
 short int STATE = 2;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
-int dist = 18;
-float ang = 0.4; 
+int dist = 96;
+float ang = 0; 
 
 
 
@@ -97,8 +97,8 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 8.5;
-double Ki = 6.5;
+double Kp = 10.5;
+double Ki = 5.5;
 
 double Kp_rho = 10.5; 
 double Ki_rho = 5.5;
@@ -152,7 +152,7 @@ void setup(){
   digitalWrite(TriStatePin, HIGH); 
 
   //Set up outputs
-  //pinMode(MotorVoltLeft,notep OUTPUT); <-------------------------------------------------<<<<<<<<<<<<<<<<<<<<<<<<<<
+  pinMode(MotorVoltLeft, OUTPUT); //<-------------------------------------------------<<<<<<<<<<<<<<<<<<<<<<<<<<
   pinMode(MotorVoltRight, OUTPUT);
   pinMode(MotorDirLeft, OUTPUT);
   pinMode(MotorDirRight, OUTPUT);
@@ -165,10 +165,10 @@ void loop(){
       break;
     case 1:
      //Find Tape
-      phi_des  = 1.75*PI;
+      phi_des  = 1.6*PI;
       
-      rho_s = 0;
-      rho = 0;
+      rho_s = rho;
+      
 
 
       if(phi_curr > phi_des){
@@ -206,26 +206,11 @@ void loop(){
       phi_des = ang;  
       
         break;
-      case 4:
-        //Move to the end of the tape.
-
-      if((double) dist /12.0 < 1){// TODO Change based on where camera loses sight. 
-         
-        rho_s = (double) dist / 12.0;  
-        
-      }else{
-        rho_s = 1;
-        if(rho_s - rho < 0.1){
-          STATE = 5; 
-        }
-      }
-      
-        
-        break;
+     
 
       case 5: //STOP MOVING!
         
-         
+        rho_s = rho;  
         
         phi_des = r* ((rad_R) - rad_L) / b;
 
@@ -240,7 +225,7 @@ void loop(){
     }
 
   
-  PID_CONTROL(); 
+  PID_CONTROL(); //Start the PID Control Loop
 
 
 
@@ -322,7 +307,12 @@ void PID_CONTROL(){
 
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
-    phi_integral += phi_er;
+
+    if(phi_er < 1){ 
+      phi_integral += phi_er;
+    }
+
+    
     //Serial.print("phi_curr = ");
     //Serial.println(phi_curr);
 
@@ -347,26 +337,6 @@ void PID_CONTROL(){
     
     rho_dot_des = rho_er * Kp_rho  + Ki_rho * rho_integral*0.001; 
     
-    
-    
-//
-//    if((abs(rho_s - rho) > 0.2) && (abs(phi_er) < PI/128)){ //While not at desired position wait to go foward.  
-//     if(!goFoward){
-//      phi_des = phi_curr;
-//      phi_integral = 0;
-//      goFoward = true;
-//      rho = 0; 
-//     }
-//     
-//     if(rho_s - rho > 0){
-//      rho_dot_des = 20;
-//     } else{
-//      rho_dot_des = -20;
-//     }
-//   
-//    } else{
-//      rho_dot_des = 0; 
-//    }
 
     
     //Serial.print("rho_dot = ");
