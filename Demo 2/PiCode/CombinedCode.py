@@ -211,10 +211,17 @@ while(1):
     #time.sleep(0.01)
     #Initial State Machine!
 
-    #IDLE2
-    if stage == -2:
+    #IDLE3
+    if stage == -3:
         print("hi")
         time.sleep(0.1)
+
+    #IDLE2
+    if stage == -2:
+        readLS = readNumber(0)
+        std = decode(readLS)
+        if std >= 10:
+            stage = 4
 
     #IDLE1
     if stage == -1:
@@ -277,22 +284,22 @@ while(1):
         stage = -1
        
     #Begin feedback cycle between camera and arduino
-    if stage == 3:
+    if stage == 69:
         buildPackage(distance[ind],angle[ind],2)
         stage = -2
         #if distanceToTape != nan:
             
-    if stage == 4:
+    if stage == 3:
        #Dylan's code here (Wide view providing angle and distance)
         #camera = PiCamera(resolution = (2592, 1944))
-        camera.resolution = (2592, 1944)
+    	camera.resolution = (2592, 1944)
        #End Dylan's code
-        if dist == Nan:
-           stage = 4
-        else:
-           buildPackage(dist,ang,2)
+        #if dist == nan:
+        #  stage = 4
+        #else:
+        buildPackage(distanceToTape,angleX,2)
 
-        print("here")
+        #print("here")
     #Continue when tape becomes not visable (~1ft)
     if stage == 5:
        buildPackage(0,0,3)
