@@ -152,8 +152,8 @@ while(1):
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (90, 70, 30)
-    upperBound = (120, 255, 255)
+    lowerBound = (95, 68, 83)
+    upperBound = (140, 216, 198)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -278,7 +278,7 @@ while(1):
        
     #Begin feedback cycle between camera and arduino
     if stage == 3:
-        buildPackage(distance[ind],angle[ind],2)
+        #buildPackage(distance[ind],angle[ind],2)
         stage = -2
         #if distanceToTape != nan:
             
