@@ -99,7 +99,7 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 7.5;
+double Kp = 9.5;
 double Ki = 3.5;
 
 double Kp_rho = 10.5; 
@@ -182,6 +182,7 @@ void loop(){
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
         
+        
         //phi_des = (double) ang / 12.0; 
         
 
@@ -224,7 +225,7 @@ void loop(){
       phi_des = (double) ang;  
 
 
-      if(phi_des - phi_curr < 0.5){
+      if(phi_des - phi_curr < 0.1){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
@@ -354,8 +355,8 @@ void PID_CONTROL(){
     }
 
     
-    //Serial.print("phi_curr = ");
-    //Serial.println(phi_curr);
+    Serial.print("phi_curr = ");
+    Serial.println(phi_curr);
 
     
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
