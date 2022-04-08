@@ -177,7 +177,7 @@ void loop(){
       
 
 
-      if(phi_des - phi_curr < 0.5){
+      if(phi_curr > 3.85){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
@@ -199,19 +199,19 @@ void loop(){
        
       
 
-      if((double) dist  < 10){// TODO Change based on where camera loses sight. 
+      if((double) dist  < 12){// TODO Change based on where camera loses sight. 
         
-        rho_s = (double) 10.0 /12.0;
+        rho_s = rho + 1;
         ang = 0; 
            
         
       } else{
         phi_des = phi_curr + ang;
-        rho_s = (double) dist / 12.0; 
+        rho_s = rho + (double) dist / 12.0; 
       }
 
 
-      if(rho - rho_s < 1){
+      if(rho - rho_s < 0.2){
         Phi_PI_READ = 10.69; 
       }
         
@@ -349,7 +349,7 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 1.5){ 
+    if(phi_er < 2){ 
       phi_integral += phi_er;
     }
 
@@ -431,6 +431,12 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
+    if(STATE == 1){
+      if(V1 > 128){
+        V1 = 128;
+      }
+    }
+
 
     analogWrite(MotorVoltRight,V1); 
     
@@ -452,6 +458,13 @@ void PID_CONTROL(){
     if(V2 > 255){
       V2 = 255;
     }
+
+    if(STATE == 1){
+      if(V2 > 128){
+        V2 = 128;
+      }
+    }
+
 
 
     analogWrite(MotorVoltLeft,V2); 
