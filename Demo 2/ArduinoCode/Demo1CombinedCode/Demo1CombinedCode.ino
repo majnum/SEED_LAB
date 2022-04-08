@@ -30,7 +30,7 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 1;//Finite State Machine
+short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
 int dist = 0;
@@ -199,19 +199,19 @@ void loop(){
        
       
 
-      if((double) dist  < 10){// TODO Change based on where camera loses sight. 
+      if((double) dist  < 12){// TODO Change based on where camera loses sight. 
         
-        rho_s = (double) 10.0 /12.0;
+        rho_s = rho + 1;
         ang = 0; 
            
         
       } else{
         phi_des = phi_curr + ang;
-        rho_s = (double) dist / 12.0; 
+        rho_s = rho + (double) dist / 12.0; 
       }
 
 
-      if(rho - rho_s < 1){
+      if(rho - rho_s < 0.2){
         Phi_PI_READ = 10.69; 
       }
         
@@ -354,8 +354,8 @@ void PID_CONTROL(){
     }
 
     
-    Serial.print("phi_curr = ");
-    Serial.println(phi_curr);
+    //Serial.print("phi_curr = ");
+    //Serial.println(phi_curr);
 
     
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
