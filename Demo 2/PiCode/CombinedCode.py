@@ -46,9 +46,27 @@ def readNumber(offset=0):
     try:
         number = bus.read_i2c_block_data(address, offset, 32)
     except OSError:
-        number = -1
+        number = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         print("I2C Read Error")
     return number
+
+
+def decode(pack):
+    ret = 0
+    mes = ""
+    for val in pack:
+        if val != 0:
+            mes = mes + chr(val)
+    if mes != "":
+        try:
+            ret = float(mes)
+             
+        except ValueError:
+            ret = 0
+            print("VE")
+
+    return ret
+    
 
 #(state:1byte)(distance:3bytes)(angle:20bytes)
 def buildPackage(dist=0, angle=0, act=0):
@@ -61,12 +79,13 @@ def buildPackage(dist=0, angle=0, act=0):
     i = 1
  
     for d in str_dist[0:3]:
-        pack[i] = int(d)
-        i = i + 1
+        if d != '.':
+            pack[i] = ord(d)
+            i = i + 1
 
     i = 4
     for d in str_ang[0:20]:
-        pack[i] = int(d)
+        pack[i] = ord(d)
         i = i + 1
 
     #Send the byte package
@@ -90,10 +109,13 @@ def nothing(x):
 camera = PiCamera()
 #
 ##camera.start_preview()
-#camera.iso = 200
-##time.sleep(2)
-##camera.shutter_speed = camera.exposure_speed
-##camera.exposure_mode = 'off'
+camera.iso = 200
+time.sleep(2)
+camera.shutter_speed = camera.exposure_speed
+camera.exposure_mode = 'off'
+g = camera.awb_gains
+camera.awb_mode = 'off'
+camera.awb_gains = g
 ##camera.stop_preview()
 ##take 4 calibration pictures
 ##awbRed = [0, 0, 0, 0]
@@ -123,25 +145,27 @@ while(1):
     camera.capture('pic.jpg')
     img = cv.imread('pic.jpg')
     #set top couple rows of pixels to black to avoid picking up anything not the floor
-    img[0:260, 0:img.shape[1]] = (0, 0, 0)
+    img[0:550, 0:img.shape[1]] = (0, 0, 0)
     #cv.imwrite('croptest.jpg', img)
+    #print('took pic')
     
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (80, 25, 20)
+    lowerBound = (90, 70, 30)
     upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((10,10), np.uint8)
+    kernel = np.ones((3,3), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     sideBySide = np.concatenate((img, imgOut, closing), axis=1) #for troubleshooting/calibrating
     sideBySide = cv.resize(sideBySide, None, fx=0.3, fy=0.3, interpolation = cv.INTER_LINEAR)
     cv.imwrite('prePostFilter.jpg', sideBySide)
+    #print('done filtering')
     
     #find center of tape
     imgGray = cv.cvtColor(closing, cv.COLOR_BGR2GRAY)
@@ -172,9 +196,9 @@ while(1):
     #print('math.sin(angleY): ', math.sin((angleY)))
 
     #adding distanceJustFound to list keeping track of all distances found
-    distanceList.append(distanceToTape)
+    #distanceList.append(distanceToTape)
     #finding index of smallest distance
-    minDistanceIndex = distanceList.index(min(distanceList))
+    #minDistanceIndex = distanceList.index(min(distanceList))
     
     #buildPackage(72, 10, 1)
 
@@ -189,56 +213,76 @@ while(1):
 
     #IDLE2
     if stage == -2:
-       Time.sleep(0.1)
+        print("hi")
+        time.sleep(0.1)
 
     #IDLE1
     if stage == -1:
-       stage = readnumber
-
+        readLS = readNumber(0)
+        std = decode(readLS)
+        if std >= 10:
+            stage = 3
+            
+        #time.sleep(0.1)
    #Initialize
     if stage == 0:
        distance = []
        angle = []
        cnt = 0
        stage = 1
+       ang = 0
 
     #Localize
     if stage == 1:
         #pack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         #writeNumber(pack, 0)
-        time.sleep(1)
+        #time.sleep(1)
         
-        number = readNumber(0)
-        print(number)
+        #number = decode(readNumber(0))
+        #print(number)
         
         buildPackage(0, 0, 1)
        #Dylan's code goes here (Take vertical line photos and calc dist)
         #camera = PiCamera(resolution = (400, 1080))
-        camera.resolution = (2592, 1944)
+        #print('set res')
+        camera.resolution = (400, 1944)
+        #print('res full')
        #End Dylan's code
-        #distance.append(distanceToTape)
-        #ang = readNumber(0)
-        #angle.append(ang)
+        distance.append(distanceToTape)
+        readLS = readNumber(0)
+        ang = decode(readLS)
 
-        #if ang == 10.69:
-         #  stage = 2
+        print(ang)
+        if ang >= 10:
+           stage = 2
+           
+        else:
+            angle.append(ang)
 
     #Turn to tape and go forward
     if stage == 2:
         min = 300
-        i = -1
+        i = 0
         ind = 0
-        for d in distance:
+        for d in distance[1:len(distance)]:
            i = i + 1
            if d < min:
                min = d
                ind = i
-
-        buildPackage(distance[i],angle[i],1)
+        print(distance)
+        print(angle)
+        #print(distance[ind])
+        #print(angle[ind])
+        buildPackage(distance[ind],angle[ind],3)
         stage = -1
        
     #Begin feedback cycle between camera and arduino
     if stage == 3:
+        buildPackage(distance[ind],angle[ind],2)
+        stage = -2
+        #if distanceToTape != nan:
+            
+    if stage == 4:
        #Dylan's code here (Wide view providing angle and distance)
         #camera = PiCamera(resolution = (2592, 1944))
         camera.resolution = (2592, 1944)
@@ -248,8 +292,9 @@ while(1):
         else:
            buildPackage(dist,ang,2)
 
+        print("here")
     #Continue when tape becomes not visable (~1ft)
-    if stage == 4:
+    if stage == 5:
        buildPackage(0,0,3)
 
     

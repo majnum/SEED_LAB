@@ -30,11 +30,13 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 2;//Finite State Machine
+short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
-int dist = 96;
+int dist = 0;
 float ang = 0; 
+double Phi_PI_READ = 0;
+
 
 
 
@@ -97,8 +99,8 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 10.5;
-double Ki = 5.5;
+double Kp = 7.5;
+double Ki = 3.5;
 
 double Kp_rho = 10.5; 
 double Ki_rho = 5.5;
@@ -159,21 +161,31 @@ void setup(){
 }
 
 void loop(){
+  
+  Phi_PI_READ = phi_curr;
+
+  
   switch(STATE){
     case 0:
         //Don't Change
       break;
     case 1:
      //Find Tape
-      phi_des  = 1.6*PI;
+      phi_des  = 1.8*PI;
       
       rho_s = rho;
       
 
 
-      if(phi_curr > phi_des){
+      if(phi_des - phi_curr < 0.5){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
+        Phi_PI_READ = 10.69;
+        
+        //phi_des = (double) ang / 12.0; 
+        
+
+        
       }
       
        break;
@@ -193,9 +205,15 @@ void loop(){
         ang = 0; 
            
         
+      } else{
+        phi_des = phi_curr + ang;
+        rho_s = (double) dist / 12.0; 
       }
-      phi_des = phi_curr + ang;
-      rho_s = (double) dist / 12.0; 
+
+
+      if(rho - rho_s < 1){
+        Phi_PI_READ = 10.69; 
+      }
         
         break;
         
@@ -203,7 +221,19 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-      phi_des = ang;  
+      phi_des = (double) ang;  
+
+
+      if(phi_des - phi_curr < 0.5){
+        //Send Pi Flag it is time to Transisition
+        //Send 10.69 to pi
+        Phi_PI_READ = 10.69;
+        
+        //phi_des = (double) ang / 12.0; 
+        
+
+        
+      }
       
         break;
      
@@ -240,11 +270,11 @@ void receiveData(int byteCount){
   if(byteCount > 1){
     while(Wire.available()){
       in_data[i] = Wire.read();
-      Serial.print(in_data[i]);
-      Serial.print(' ');
+      //Serial.print(in_data[i]);
+      //Serial.print(' ');
       i++;
     }
-    Serial.print('\n');
+    //Serial.print('\n');
     i--;
     len = i;
 
@@ -252,6 +282,7 @@ void receiveData(int byteCount){
     //Break array into parts
     int j = 1;
     STATE = in_data[j];
+    //Serial.print(STATE);
     String now = ""; 
 
     //Get the distance
@@ -259,6 +290,8 @@ void receiveData(int byteCount){
       now = now + char(in_data[j]);
     }
     dist = now.toInt();
+    //Serial.print(dist);
+    //Serial.print(", ang: ");
 
 
     now = "";
@@ -266,6 +299,8 @@ void receiveData(int byteCount){
         now = now + char(in_data[j]);
     }
     ang = now.toFloat();
+    //Serial.print(ang);
+    //Serial.print(", dist: ");
  
   }
   
@@ -277,7 +312,13 @@ void receiveData(int byteCount){
 void sendData(){
   static byte data[32] = {};
   for(int i = 0; i < 32; i++){
-    data[i] = 1;
+    data[i] = 0;
+  }
+  String out = String(Phi_PI_READ);
+  //String out_new = out.substring(0,5);
+
+  for(int i = 0; i < 6; i++){
+    data[i] = out[i];
   }
   /*
   String start_val = String(analogRead(sensorPin));
@@ -308,7 +349,7 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 1){ 
+    if(phi_er < 1.5){ 
       phi_integral += phi_er;
     }
 
