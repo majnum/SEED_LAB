@@ -206,12 +206,12 @@ void loop(){
            
         
       } else{
-        phi_des = phi_curr + ang;
+        phi_des = phi_curr + ang*0.01745;
         rho_s = rho + (double) dist / 12.0; 
       }
 
 
-      if(rho - rho_s < 0.2){
+      if(rho - rho_s < 0.1){
         Phi_PI_READ = 10.69; 
       }
         
