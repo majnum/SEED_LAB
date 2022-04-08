@@ -30,10 +30,10 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 0;//Finite State Machine
+short int STATE = 2;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
-int dist = 0;
+int dist = 36;
 float ang = 0; 
 double Phi_PI_READ = 0;
 
@@ -99,10 +99,10 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 9.5;
-double Ki = 3.5;
+double Kp = 10.5;
+double Ki = 6.5;
 
-double Kp_rho = 10.5; 
+double Kp_rho = 8.5; 
 double Ki_rho = 5.5;
 
 
@@ -119,6 +119,7 @@ double rho_s = 0;
 
 double rho_dot_des = 0; 
 double rho = 0;
+bool CLOSE = false;
 
 //******************************************************************************************
 
@@ -177,7 +178,7 @@ void loop(){
       
 
 
-      if(phi_curr > 3.85){
+      if(phi_curr > 5){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
@@ -200,20 +201,27 @@ void loop(){
        
       
 
-      if((double) dist  < 12){// TODO Change based on where camera loses sight. 
+      if(((abs(rho - (double) dist/12.0 ) < 1) && dist > 1) && CLOSE == false){// TODO Change based on where camera loses sight. 
         
         rho_s = rho + 1;
-        ang = 0; 
+        phi_des = phi_curr;
+        CLOSE = true;
+        Serial.println("No");
            
         
-      } else{
+      } 
+      
+      if(CLOSE == false){
         phi_des = phi_curr + ang*0.01745;
         rho_s = rho + (double) dist / 12.0; 
+        Serial.println("Yay"); 
       }
 
 
       if(rho - rho_s < 0.1){
-        Phi_PI_READ = 10.69; 
+        
+        Phi_PI_READ = 10.69;
+        
       }
         
         break;
@@ -350,13 +358,13 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 2){ 
+    if(phi_er < 3){ 
       phi_integral += phi_er;
     }
 
     
-    Serial.print("phi_curr = ");
-    Serial.println(phi_curr);
+    //Serial.print("phi_curr = ");
+    //Serial.println(phi_curr);
 
     
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
@@ -372,7 +380,10 @@ void PID_CONTROL(){
     rho = r * (abs(rad_R + rad_L) / 2.0);
     
     rho_er  = rho_s - rho;
-    rho_integral += rho_er;
+
+    if(rho_er < 2){
+      rho_integral += rho_er;
+    }
 
     //Serial.print("rho_curr = ");
     //Serial.println(rho);
@@ -433,8 +444,8 @@ void PID_CONTROL(){
     }
 
     if(STATE == 1){
-      if(V1 > 128){
-        V1 = 128;
+      if(V1 > 52){
+        V1 = 52;
       }
     }
 
@@ -461,8 +472,8 @@ void PID_CONTROL(){
     }
 
     if(STATE == 1){
-      if(V2 > 128){
-        V2 = 128;
+      if(V2 > 52){
+        V2 = 52;
       }
     }
 

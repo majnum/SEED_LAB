@@ -107,9 +107,11 @@ def nothing(x):
 ##shortest distance will be the actual tape instead of blue desk legs/other noise
 #
 camera = PiCamera()
-#
-##camera.start_preview()
+camera.start_preview(fullscreen = False, window = (900, 20, 640, 480))
+
 camera.iso = 200
+camera.resolution = (640, 480)
+camera.framerate = (15)
 time.sleep(2)
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
@@ -140,20 +142,32 @@ minDistance = 100000
 #
 #
 stage = 0
+res = (384, 960)
+resNp = np.empty((384 * 960 * 3,), dtype = np.uint8)
+resTuple = (384, 960, 3)
+#camera.resolution = res
+#camera.framerate = 24
+#time.sleep(2)
+
 ##find blue tape
 while(1):
+    #img = resNp
+    #camera.capture(img, 'bgr')    
+    #img = img.reshape(resTuple)
+    #cv.imwrite('img.jpg', img)
+    
     camera.capture('pic.jpg')
     img = cv.imread('pic.jpg')
     #set top couple rows of pixels to black to avoid picking up anything not the floor
-    img[0:550, 0:img.shape[1]] = (0, 0, 0)
+    img[0:200, 0:img.shape[1]] = (0, 0, 0)
     #cv.imwrite('croptest.jpg', img)
     #print('took pic')
     
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (95, 68, 83)
-    upperBound = (140, 216, 198)
+    lowerBound = (95, 100, 70)
+    upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -227,6 +241,7 @@ while(1):
     if stage == -1:
         readLS = readNumber(0)
         std = decode(readLS)
+        print(std)
         if std >= 10:
             stage = 3
             
@@ -250,10 +265,12 @@ while(1):
         
         buildPackage(0, 0, 1)
        #Dylan's code goes here (Take vertical line photos and calc dist)
-        #camera = PiCamera(resolution = (400, 1080))
-        #print('set res')
-        camera.resolution = (400, 1944)
-        #print('res full')
+        #camera.resolution = (800, 1944)
+        #res = (384, 960)
+        #resNp = np.empty((384 * 960 * 3,), dtype = np.uint8)
+        #resTuple = (384, 960, 3)
+        #camera.resolution = res
+        #camera.framerate = 24
        #End Dylan's code
         distance.append(distanceToTape)
         readLS = readNumber(0)
@@ -281,23 +298,27 @@ while(1):
         #print(distance[ind])
         #print(angle[ind])
         buildPackage(distance[ind],angle[ind],3)
+        time.sleep(10)
         stage = -1
        
     #Begin feedback cycle between camera and arduino
-<<<<<<< HEAD
+
     if stage == 3:
         #buildPackage(distance[ind],angle[ind],2)
-=======
+        print("here")
+        
     if stage == 69:
         buildPackage(distance[ind],angle[ind],2)
->>>>>>> 5c7967edc574df00f8e5c9e5b8554bea9c1bd780
         stage = -2
         #if distanceToTape != nan:
             
     if stage == 3:
        #Dylan's code here (Wide view providing angle and distance)
-        #camera = PiCamera(resolution = (2592, 1944))
-    	camera.resolution = (2592, 1944)
+        #res = (2592, 1936)
+        #resNp = np.empty((2592 * 1936 * 3,), dtype = np.uint8)
+        #resTuple = (2592, 1936, 3)
+        #camera.resolution = res
+        #camera.framerate = 24
        #End Dylan's code
         #if dist == nan:
         #  stage = 4
