@@ -30,7 +30,7 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 0;//Finite State Machine
+short int STATE = 1;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
 int dist = 0;
@@ -177,7 +177,7 @@ void loop(){
       
 
 
-      if(phi_des - phi_curr < 0.5){
+      if(phi_curr > 3.85){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
@@ -349,13 +349,13 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 1.5){ 
+    if(phi_er < 2){ 
       phi_integral += phi_er;
     }
 
     
-    //Serial.print("phi_curr = ");
-    //Serial.println(phi_curr);
+    Serial.print("phi_curr = ");
+    Serial.println(phi_curr);
 
     
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
@@ -431,6 +431,12 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
+    if(STATE == 1){
+      if(V1 > 128){
+        V1 = 128;
+      }
+    }
+
 
     analogWrite(MotorVoltRight,V1); 
     
@@ -452,6 +458,13 @@ void PID_CONTROL(){
     if(V2 > 255){
       V2 = 255;
     }
+
+    if(STATE == 1){
+      if(V2 > 128){
+        V2 = 128;
+      }
+    }
+
 
 
     analogWrite(MotorVoltLeft,V2); 
