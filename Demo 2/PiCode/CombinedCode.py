@@ -21,6 +21,7 @@ import glob
 import smbus2 as smbus
 import board
 import math
+from PIL import Image
 #
 #
 # Initialise I2C bus.
@@ -107,17 +108,22 @@ def nothing(x):
 ##shortest distance will be the actual tape instead of blue desk legs/other noise
 #
 camera = PiCamera()
-camera.start_preview(fullscreen = False, window = (900, 20, 640, 480))
+camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
 
+width = 640
+height = 480
 camera.iso = 200
-camera.resolution = (640, 480)
-camera.framerate = (15)
+camera.resolution = (width, height) #be careful changing this, will screw up opencv image
+camera.framerate = 24
 time.sleep(2)
+    
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
 g = camera.awb_gains
+print(float(g[0]), float(g[1]))
 camera.awb_mode = 'off'
 camera.awb_gains = g
+
 ##camera.stop_preview()
 ##take 4 calibration pictures
 ##awbRed = [0, 0, 0, 0]
@@ -138,28 +144,19 @@ camera.awb_gains = g
 ##camera.awb_gains = avgAwb
 #
 distanceList = []
+distance = []
+angle = []
 minDistance = 100000
-#
-#
-stage = 0
-res = (384, 960)
-resNp = np.empty((384 * 960 * 3,), dtype = np.uint8)
-resTuple = (384, 960, 3)
-#camera.resolution = res
-#camera.framerate = 24
-#time.sleep(2)
-
+cameraClose = False
+stage = 1
 ##find blue tape
-while(1):
-    #img = resNp
-    #camera.capture(img, 'bgr')    
-    #img = img.reshape(resTuple)
-    #cv.imwrite('img.jpg', img)
+while(1):  
+    img = np.empty((height * width * 3,), dtype=np.uint8)
+    camera.capture(img, 'bgr')
+    img = img.reshape((height, width, 3))
     
-    camera.capture('pic.jpg')
-    img = cv.imread('pic.jpg')
     #set top couple rows of pixels to black to avoid picking up anything not the floor
-    img[0:200, 0:img.shape[1]] = (0, 0, 0)
+    #img[0:200, 0:img.shape[1]] = (0, 0, 0)
     #cv.imwrite('croptest.jpg', img)
     #print('took pic')
     
@@ -173,19 +170,28 @@ while(1):
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((3,3), np.uint8)
+    kernel = np.ones((6,6), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
-    sideBySide = np.concatenate((img, imgOut, closing), axis=1) #for troubleshooting/calibrating
-    sideBySide = cv.resize(sideBySide, None, fx=0.3, fy=0.3, interpolation = cv.INTER_LINEAR)
-    cv.imwrite('prePostFilter.jpg', sideBySide)
-    #print('done filtering')
     
     #find center of tape
     imgGray = cv.cvtColor(closing, cv.COLOR_BGR2GRAY)
     ret, imgThresh = cv.threshold(imgGray, 40, 255, cv.THRESH_BINARY)
-    nonZero = imgThresh.nonzero()
+    sideBySide = np.concatenate((img, imgOut, closing), axis=1) #for troubleshooting/calibrating
+    #sideBySide = cv.resize(sideBySide, None, fx=0.3, fy=0.3, interpolation = cv.INTER_LINEAR)
+    cv.imwrite('prePostFilter.jpg', sideBySide)
+    nonZero = imgThresh.nonzero()        
     avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
+    #check if there are values at the bottom of cameras view
+    #cv.imwrite('imgThreshold.jpg', imgThresh)
+    isItClose = imgThresh[(height-30):height, 0:width]
+    #camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
+    #o = camera.add_overlay(closing, layer = 3, alpha = 128, fullscreen = False, window = (1280, 20, 640, 480))
+    if np.count_nonzero(isItClose) is not 0:
+        cameraClose = True
+        print('wow we\'re close to the tape')
+    else:
+        cameraClose = False
     
     #calculating angle
     xFov = 53.5
@@ -197,14 +203,15 @@ while(1):
     angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
     angleY = (yFov / 2) * (centerToCenterY / imgCenterY) 
     
-    if stage == 1: #xFov will be all janky for sweep state, so avoid x angle calculation
-        angleX = -1
+    #if stage == 1: #xFov will be all janky for sweep state, so avoid x angle calculation
+    #    angleX = -1
     
     #calculate approximate distance to tape center
     angleCam = 13 #degrees
     cameraHyp = 6.75 + 1.3 #inches plus fudge
     distanceToTape = math.sin(math.radians(90 - angleY)) * cameraHyp / (math.sin(math.radians(angleY + angleCam)))
-        
+
+    print('X angle: ', angleX)
     print('Y angle: ', angleY)
     print('this distance: ', distanceToTape)
     #print('math.sin(angleY): ', math.sin((angleY)))
