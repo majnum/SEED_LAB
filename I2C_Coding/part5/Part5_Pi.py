@@ -1,7 +1,7 @@
 import smbus2 as smbus
 import time
 import board
-import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
+#import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
 
 
 # Modify this if you have a different sized Character LCD
@@ -12,22 +12,22 @@ lcd_rows = 2
 i2c = board.I2C()  # uses board.SCL and board.SDA
 
 # Initialise the LCD class
-lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
-lcd.color = [0, 0, 0]
-lcd.clear()
+#lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
+#lcd.color = [0, 0, 0]
+#lcd.clear()
 
 
-def displayReset():
-    lcd.clear()
-    # Set LCD color to green
-    lcd.color = [0, 100, 0]
-
-def displayRes(sent, received):
-    lcd.clear()
-    # Set LCD color to green
-    lcd.color = [0, 100, 0]
-    message = "Sent:  " + str(sent) + "\nGot:  " + str(received) 
-    lcd.message = message
+#def displayReset():
+#    lcd.clear()
+#    # Set LCD color to green
+#    lcd.color = [0, 100, 0]
+#
+#def displayRes(sent, received):
+#    lcd.clear()
+#    # Set LCD color to green
+#    lcd.color = [0, 100, 0]
+#    message = "Sent:  " + str(sent) + "\nGot:  " + str(received) 
+#    lcd.message = message
     
     
 # for RPI version 1, use “bus = smbus.SMBus(0)”
@@ -36,9 +36,9 @@ bus = smbus.SMBus(1)
 # This is the address we setup in the Arduino Program
 address = 0x04
 
-def displayMes(val):
-    lcd.message = "                                "                       
-    lcd.message = val
+#def displayMes(val):
+#    lcd.message = "                                "                       
+#    lcd.message = val
 
 def writeNumber(value, offset):
     #bus.write_byte(address, value)
@@ -49,7 +49,7 @@ def readNumber(offset):
     number = bus.read_i2c_block_data(address, offset, 32)
     return number
 
-displayReset()
+#displayReset()
 
 while True:
 
@@ -83,8 +83,8 @@ while True:
     for num in number:
         if num != 0:
             message = message + chr(num)
-    if message != "":
-        displayMes("")
+    #if message != "":
+        #displayMes("")
     print(message)
     #print("Arduino: Hey RPI, got you this number: ", number)
     #print()
