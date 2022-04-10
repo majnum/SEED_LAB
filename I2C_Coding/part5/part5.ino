@@ -8,7 +8,7 @@ int in_data[32] = {};
 
 void setup() {
   pinMode(13, OUTPUT);
-  Serial.begin(115200); //start serial for output
+  Serial.begin(57600); //start serial for output
   
   //initialize i2c as slave
   Wire.begin(SLAVE_ADDRESS);
@@ -52,7 +52,7 @@ void receiveData(int byteCount){
   */
   
 }
-
+/*
 void sendData(){
   byte data[32] = {};
   if(read_offset == in_data[0]){
@@ -66,4 +66,11 @@ void sendData(){
     }
   }
   Wire.write(data, 32);
+}
+*/
+
+void sendData(){
+
+}
+  
 }
