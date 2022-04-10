@@ -70,7 +70,6 @@ void sendData(){
 */
 
 void sendData(){
-
-}
-  
+  float bye = 2.034;
+  Wire.write((byte*) &bye, sizeof(float));
 }

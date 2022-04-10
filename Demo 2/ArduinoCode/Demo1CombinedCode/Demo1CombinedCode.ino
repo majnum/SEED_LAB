@@ -30,11 +30,12 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 2;//Finite State Machine
+short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
 int dist = 36;
 float ang = 0; 
+float turn_to = 0;
 double Phi_PI_READ = 0;
 
 
@@ -127,7 +128,7 @@ bool CLOSE = false;
  
 void setup(){
   pinMode(13, OUTPUT);
-  Serial.begin(115200);
+  Serial.begin(57600);
   
   //initialize i2c as slave
   Wire.begin(SLAVE_ADDRESS);
@@ -161,18 +162,16 @@ void setup(){
   pinMode(MotorDirRight, OUTPUT);
 }
 
-void loop(){
-  int d = 100;
-}
 
-/*
 void loop(){
   
   Phi_PI_READ = phi_curr;
-
+  //Serial.print(STATE);
   
   switch(STATE){
     case 0:
+
+         rho_s = rho;    
         //Don't Change
       break;
     case 1:
@@ -181,18 +180,13 @@ void loop(){
       
       rho_s = rho;
       
-
-
       if(phi_curr > 5){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
-        
-        
-        //phi_des = (double) ang / 12.0; 
-        
-
-        
+        //Serial.println("Change");
+                
+        //phi_des = (double) ang / 12.0;  
       }
       
        break;
@@ -211,7 +205,7 @@ void loop(){
         rho_s = rho + 1;
         phi_des = phi_curr;
         CLOSE = true;
-        Serial.println("No");
+        //Serial.println("No");
            
         
       } 
@@ -219,7 +213,7 @@ void loop(){
       if(CLOSE == false){
         phi_des = phi_curr + ang*0.01745;
         rho_s = rho + (double) dist / 12.0; 
-        Serial.println("Yay"); 
+        //Serial.println("Yay"); 
       }
 
 
@@ -235,13 +229,16 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-      phi_des = (double) ang;  
+      phi_des = (double) turn_to;  
 
 
       if(phi_des - phi_curr < 0.1){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
+
+
+        STATE = 2;
         
         //phi_des = (double) ang / 12.0; 
         
@@ -278,7 +275,7 @@ void loop(){
  
 }
 
-*/
+
 //Recieve data across the i2c bus in the form of (state: 1 byte)(dist: 3 bytes)(angle: 20 bytes)
 void receiveData(int byteCount){
   int i = 0;
@@ -296,26 +293,35 @@ void receiveData(int byteCount){
     
     //Break array into parts
     int j = 1;
-    STATE = in_data[j];
-    //Serial.print(STATE);
-    String now = ""; 
-
+    if(in_data[j] != 255){
+      if (in_data[j] != 9){
+        STATE = in_data[j];
+      }
+      Serial.print(in_data[j]);
+      String now = ""; 
+    
     //Get the distance
-    for (j = 2; j < 5; j++){
-      now = now + char(in_data[j]);
-    }
-    dist = now.toInt();
-    //Serial.print(dist);
+      for (j = 2; j < 5; j++){
+        now = now + char(in_data[j]);
+      }
+      dist = now.toInt();
+    //Serial.print();
     //Serial.print(", ang: ");
 
 
-    now = "";
-    for (j = 5; j < 22; j++){
-        now = now + char(in_data[j]);
-    }
-    ang = now.toFloat();
+      now = "";
+      for (j = 5; j < 22; j++){
+          now = now + char(in_data[j]);
+      }
+      if(in_data[j] != 9){
+        ang = now.toFloat();
+      }
+      else{
+        turn_to = now.toFloat();
+      }
     //Serial.print(ang);
     //Serial.print(", dist: ");
+    }
  
   }
   
@@ -353,7 +359,6 @@ void PID_CONTROL(){
     // Outer Loop Time
     int outerLoopTime = micros();
     
-    
     //Phi to phidot control 
 
     static double phi_er;
@@ -364,15 +369,12 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 3){ 
+    if(phi_er < 2){ 
       phi_integral += phi_er;
     }
-
     
     //Serial.print("phi_curr = ");
-    //Serial.println(phi_curr);
-
-    
+    //Serial.println(phi_curr);    
     double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
 
 
@@ -450,8 +452,8 @@ void PID_CONTROL(){
     }
 
     if(STATE == 1){
-      if(V1 > 52){
-        V1 = 52;
+      if(V1 > 62){
+        V1 = 62;
       }
     }
 
@@ -478,8 +480,8 @@ void PID_CONTROL(){
     }
 
     if(STATE == 1){
-      if(V2 > 52){
-        V2 = 52;
+      if(V2 > 62){
+        V2 = 62;
       }
     }
 
