@@ -218,11 +218,19 @@ while(1):
     
     if stage == 3:
         print("hi")
-        #try:
-            #buildPackage(int(distanceToTape),int(angleX),9)
-        #except ValueError:
-            #print("nan")
-        #print("hi")
+        try:
+            if(cameraClose):
+                buildPackage(int(distanceToTape),angleX,10)
+                stage = 4
+            else:    
+                buildPackage(int(distanceToTape),angleX,9)
+        except ValueError:
+            print("nan")
+        print("hi")
+        
+        
+    if stage == 4:
+        print("done")
         
 
 

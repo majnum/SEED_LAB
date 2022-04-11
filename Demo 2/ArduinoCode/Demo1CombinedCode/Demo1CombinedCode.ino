@@ -38,10 +38,6 @@ float ang = 0;
 float turn_to = 0;
 double Phi_PI_READ = 0;
 
-
-
-
-
 //time variables
 float currentTime = 0;
 float previousTime = 0;
@@ -106,10 +102,6 @@ double Ki = 6.5;
 double Kp_rho = 8.5; 
 double Ki_rho = 5.5;
 
-
-
-
-
 //Angle Desired
 double phi_des = 0; 
 
@@ -156,7 +148,7 @@ void setup(){
   digitalWrite(TriStatePin, HIGH); 
 
   //Set up outputs
-  pinMode(MotorVoltLeft, OUTPUT); //<-------------------------------------------------<<<<<<<<<<<<<<<<<<<<<<<<<<
+  pinMode(MotorVoltLeft, OUTPUT); 
   pinMode(MotorVoltRight, OUTPUT);
   pinMode(MotorDirLeft, OUTPUT);
   pinMode(MotorDirRight, OUTPUT);
@@ -197,10 +189,6 @@ void loop(){
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
       
-      
-       
-      
-
       if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
         
         rho_s = rho + 1;
@@ -218,7 +206,7 @@ void loop(){
       } else{
         rho_s = 0; 
       }
-      phi_des = phi_curr + ang*0.01745;
+      phi_des = phi_curr + turn_to*0.01745;
 
 
       if(abs(rho - rho_s) < 0.1){
@@ -233,7 +221,7 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-      phi_des = (double) turn_to;  
+      phi_des = (double) ang;  
 
 
       if(abs(phi_des - phi_curr) < 0.05){
@@ -252,6 +240,7 @@ void loop(){
       }
       
         break;
+
      
 
       case 5: //STOP MOVING!
@@ -318,13 +307,13 @@ void receiveData(int byteCount){
       for (j = 5; j < 22; j++){
           now = now + char(in_data[j]);
       }
-      if(in_data[j] != 9){
+      if(in_data[1] != 9){
         ang = now.toFloat();
       }
       else{
         turn_to = now.toFloat();
       }
-    Serial.print(ang);
+    Serial.print(turn_to);
     Serial.print('\n');
     //Serial.print(", dist: ");
     }
