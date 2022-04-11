@@ -174,6 +174,7 @@ void loop(){
          rho_s = rho;    
         //Don't Change
       break;
+      
     case 1:
      //Find Tape
       phi_des  = 1.8*PI;
@@ -210,11 +211,14 @@ void loop(){
         
       } 
       
-      if(CLOSE == false){
-        phi_des = phi_curr + ang*0.01745;
+      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
+        
         rho_s = rho + (double) dist / 12.0; 
         //Serial.println("Yay"); 
+      } else{
+        rho_s = 0; 
       }
+      phi_des = phi_curr + ang*0.01745;
 
 
       if(abs(rho - rho_s) < 0.1){
@@ -239,6 +243,7 @@ void loop(){
 
 
         STATE = 2;
+        Serial.println("Arduino Change State");
         
         //phi_des = (double) ang / 12.0; 
         
