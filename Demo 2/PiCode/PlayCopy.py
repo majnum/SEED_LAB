@@ -103,7 +103,9 @@ camera.exposure_mode = 'off'
 #g = camera.awb_gains
 #print(float(g[0]), float(g[1]))
 camera.awb_mode = 'off'
-#time.sleep(3)
+time.sleep(3)
+#good 304 gains: 1.5, 1.2
+#sudo vcdbg set awb_mode 0
 camera.awb_gains = (1.5, 1.2)
 time.sleep(3)
 print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
@@ -124,7 +126,9 @@ while(1):
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
+    #good vals for 304 at night: 60, 20, 20; 120, 255, 255
     lowerBound = (60, 20, 20)
+    # 60 20 20
     upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
@@ -179,58 +183,79 @@ while(1):
     print('this distance: ', distanceToTape)
     
     if stage == 0:
-        distance = []
-        angle = []
-        cnt = 0
+        #distance = []
+        #angle = []
+        #cnt = 0
         stage = 1
-        ang = 0
+        #ang = 0
         buildPackage(0, 0, 1)
      
     if stage == 1:
-        readLS = readNumber(0)
-        ang = decode(readLS)
+        #readLS = readNumber(0)
+        #ang = decode(readLS)
         
-        print(ang)
+        #print(ang)
         
-        if(ang > 10):
-            stage = 2
+        #if(ang > 10):
+         #   stage = 2
             
-        elif ang > 0:
-            distance.append(distanceToTape)
-            angle.append(ang)
+        #elif ang > 0:
+         #   distance.append(distanceToTape)
+          #  angle.append(ang)
             
+         if (distanceToTape < 60) and (distanceToTape > 36):
+             print(distanceToTape)
+             stage = 2
+             buildPackage(distanceToTape,angleX,3)
     if stage == 2:
-        min = 300
-        i = 0
-        ind = 0
-        for d in distance[1:len(distance)]:
-           i = i + 1
-           if d < min:
-               min = d
-               ind = i
-        print(distance[ind])
-        print(angle[ind])
-        print(distance)
-        print(angle)
-        
-        buildPackage(distance[ind],angle[ind],3)
-        stage = 3
-    
+        print("Stage 2")
+        buildPackage(distanceToTape,angleX,9)
+        if(cameraClose):
+            stage = 3
+            buildPackage(9,angleX,9)
+             
     if stage == 3:
-        print("hi")
-        try:
-            if(cameraClose):
-                buildPackage(int(distanceToTape),angleX,10)
-                stage = 4
-            else:    
-                buildPackage(int(distanceToTape),angleX,9)
-        except ValueError:
-            print("nan")
-        print("hi")
+        print("done")
+        
+#    if stage == 2:
+#        min = 300
+#        i = 0
+#        ind = 0
+#        for d in distance[1:len(distance)]:
+#           i = i + 1
+#           if d < min:
+#               min = d
+#               ind = i
+#        print(distance[ind])
+#        print(angle[ind])
+#        print(distance)
+#        print(angle)
+#        
+#        if min != 300:
+#            buildPackage(distance[ind],angle[ind],3)
+#            stage = 3
+#        else:
+#            print("didn't see any tape")
+#            stage = 5
+#    
+#    if stage == 3:
+#        print("hi")
+#        try:
+#            if(cameraClose):
+#                buildPackage(int(distanceToTape),angleX,10)
+#                stage = 4
+#            else:    
+#                buildPackage(int(distanceToTape),angleX,9)
+#        except ValueError:
+#            print("nan")
+#        print("hi")
         
         
     if stage == 4:
         print("done")
+        
+    if stage == 5:
+        print("IDLE")
         
 
 

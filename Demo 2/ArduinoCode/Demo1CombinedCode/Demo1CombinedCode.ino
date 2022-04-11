@@ -37,6 +37,7 @@ int dist = 36;
 float ang = 0; 
 float turn_to = 0;
 double Phi_PI_READ = 0;
+String data;
 
 //time variables
 float currentTime = 0;
@@ -60,8 +61,11 @@ double phi_curr = 0;
 long int x = 0;
 long int y = 0; 
 
-void receiveData(int byteCount);
-void sendData();
+//void receiveData(int byteCount);
+//void sendData();
+
+void updateEncoder_R();
+void updateEncoder_L();
 
 
 //wheel constants
@@ -123,11 +127,11 @@ void setup(){
   Serial.begin(38400);
   
   //initialize i2c as slave
-  Wire.begin(SLAVE_ADDRESS);
+  //Wire.begin(SLAVE_ADDRESS);
 
   //define callabcks for i2c communication
-  Wire.onReceive(receiveData);
-  Wire.onRequest(sendData);
+  //Wire.onReceive(receiveData);
+  //Wire.onRequest(sendData);
   Serial.println("Ready!");
 
   //assign Pins I/O Logic
@@ -188,6 +192,7 @@ void loop(){
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
+      phi_des = phi_curr + turn_to*0.01745;
       
       if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
         
@@ -204,14 +209,15 @@ void loop(){
         rho_s = rho + (double) dist / 12.0; 
         //Serial.println("Yay"); 
       } else{
-        rho_s = 0; 
+        rho_s = rho; 
       }
-      phi_des = phi_curr + turn_to*0.01745;
+      
+      
 
 
       if(abs(rho - rho_s) < 0.1){
         
-        Phi_PI_READ = 10.69;
+        //Phi_PI_READ = 10.69;
         
       }
         
@@ -221,13 +227,13 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-      phi_des = (double) ang;  
+      phi_des = (double) ang*0.01745;  
 
 
-      if(abs(phi_des - phi_curr) < 0.05){
+      if(abs(phi_des - phi_curr) < 0.1){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
-        Phi_PI_READ = 10.69;
+        //Phi_PI_READ = 10.69;
 
 
         STATE = 2;
@@ -269,6 +275,34 @@ void loop(){
  
 }
 
+void serialEvent(){
+  if(Serial.available() > 0){
+    //data = Serial.read();
+    data = Serial.readStringUntil('\n');
+
+    int j = 0;
+    String st = ("" + data[j++]);
+    int sat = st.toInt();
+    String dis = "";
+    String ag = "";
+
+    
+    for(j = 1; j < 4; j++){
+      dis = dis + data[j];
+    }
+    dist = dis.toInt();
+    Serial.print(dist);
+    
+
+    for(j = 4; j < data.length(); j++){
+      ag = ag + data[j];
+     
+    }
+    ang = ag.toFloat();
+  Serial.flush();
+}
+
+/*
 
 //Recieve data across the i2c bus in the form of (state: 1 byte)(dist: 3 bytes)(angle: 20 bytes)
 void receiveData(int byteCount){
@@ -292,6 +326,7 @@ void receiveData(int byteCount){
         STATE = in_data[j];
       }
       //Serial.print(in_data[j]);
+      //Serial.print(" ");
       String now = ""; 
     
     //Get the distance
@@ -299,7 +334,7 @@ void receiveData(int byteCount){
         now = now + char(in_data[j]);
       }
       dist = now.toInt();
-    //Serial.print();
+    //Serial.print(dist);
     //Serial.print(", ang: ");
 
 
@@ -307,14 +342,15 @@ void receiveData(int byteCount){
       for (j = 5; j < 22; j++){
           now = now + char(in_data[j]);
       }
-      if(in_data[1] != 9){
-        ang = now.toFloat();
-      }
-      else{
-        turn_to = now.toFloat();
-      }
-    Serial.print(turn_to);
-    Serial.print('\n');
+      
+      ang = now.toFloat();
+        //Serial.print(ang);
+      
+      //else{
+        //turn_to = now.toFloat();
+      //}
+    //Serial.print(turn_to);
+    //Serial.print('\n');
     //Serial.print(", dist: ");
     }
  
@@ -343,12 +379,13 @@ void sendData(){
   for(int i = 0; i < start_val.length(); i++){
     data[i] = (int)start_val[i];
   }
-  */
+  
   //delay(200);
+  Serial.print(data[0]);
   Wire.write(data, 32);
   
 }
-
+*/
 //******************************************************************************************************************************
 //Nested PID COntroller
 
@@ -368,7 +405,12 @@ void PID_CONTROL(){
 
     if(phi_er < 2){ 
       phi_integral += phi_er;
-    }
+
+     }
+
+     if(STATE == 2){
+      phi_integral = 0;
+     }
     
     //Serial.print("phi_curr = ");
     //Serial.println(phi_curr);    
