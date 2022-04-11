@@ -1,6 +1,7 @@
 import smbus2 as smbus
 import time
 import board
+import struct
 #import adafruit_character_lcd.character_lcd_rgb_i2c as character_lcd
 
 
@@ -15,6 +16,7 @@ i2c = board.I2C()  # uses board.SCL and board.SDA
 #lcd = character_lcd.Character_LCD_RGB_I2C(i2c, lcd_columns, lcd_rows)
 #lcd.color = [0, 0, 0]
 #lcd.clear()
+
 
 
 #def displayReset():
@@ -79,13 +81,16 @@ while True:
         print("I2C Error")
         displayMes("I2C Error")
     
-    message = ""
-    for num in number:
-        if num != 0:
-            message = message + chr(num)
+    #message = ""
+    #for num in number:
+     #   if num != 0:
+      #      message = message + chr(num)
     #if message != "":
         #displayMes("")
-    print(message)
+    #print(message)
+      
+    print(number) 
+      
     #print("Arduino: Hey RPI, got you this number: ", number)
     #print()
     #displayRes(value, number)

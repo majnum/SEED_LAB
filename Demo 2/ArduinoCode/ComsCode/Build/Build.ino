@@ -1,16 +1,8 @@
-//******************************************************************************************
-//Combined Arduino Code for Demo 2
-//******************************************************************************************
-//By Eli Ball & Joey Thurman & Joshua Higgins
-//4/1/2022
-
-//This Program Allows the Pi to set a predefined direction to turn the robot and then have the robot move foward based on data read in by the Pi's Camera.  
-
-//******************************************************************************************
-//          GLOBAL VARIABLES
-//******************************************************************************************
-
 #include <Wire.h>
+
+
+//I2C communication constant
+#define SLAVE_ADDRESS 0x04
 
 //Define Motor Pins
 #define TriStatePin    4
@@ -25,48 +17,15 @@
 #define CLK_L  3    //Uses Interuppt pin
 #define DT_L   11
 
-//I2C communication constant
-#define SLAVE_ADDRESS 0x04
+void receiveData(int byteCount);
+void sendData();
 
-//I2C communication variables
-int read_offset = 0;
+//I2C variables
+float out = 0;
 short int STATE = 0;//Finite State Machine
-int len = 0;
-int in_data[32] = {};
+float Phi_PI_READ = 0;
 int dist = 36;
 float ang = 0; 
-float turn_to = 0;
-double Phi_PI_READ = 0;
-String data;
-
-//time variables
-float currentTime = 0;
-float previousTime = 0;
-float elapsedTime = 0;
-float samplingTime = 0;
-
-//angular velocity variables
-double theta_dot_L = 0;
-double theta_dot_R = 0;
-double velocityRight = 0;
-double velocityLeft = 0;
-double velocityError = 0;
-
-//angle position variables
-double rad_L = 0;
-double rad_R = 0;
-double phi_curr = 0; 
-
-//X and Y Position
-long int x = 0;
-long int y = 0; 
-
-//void receiveData(int byteCount);
-//void sendData();
-
-void updateEncoder_R();
-void updateEncoder_L();
-
 
 //wheel constants
 float r = 0.24479; // radius of wheel as a fraction of one foot
@@ -98,7 +57,6 @@ int tNewLeft;
 int deltaTRight = 0; // time new - time old
 int deltaTLeft = 0;
 
-
 // Controller parameters
 double Kp = 10.5;
 double Ki = 6.5;
@@ -113,64 +71,53 @@ double phi_des = 0;
 double rho_s = 0;
 
 //Distance Vars
-
 double rho_dot_des = 0; 
 double rho = 0;
 bool CLOSE = false;
 
-//******************************************************************************************
+//time variables
+float currentTime = 0;
+float previousTime = 0;
+float elapsedTime = 0;
+float samplingTime = 0;
 
-//******************************************************************************************
- 
-void setup(){
+//angular velocity variables
+double theta_dot_L = 0;
+double theta_dot_R = 0;
+double velocityRight = 0;
+double velocityLeft = 0;
+double velocityError = 0;
+
+//angle position variables
+double rad_L = 0;
+double rad_R = 0;
+double phi_curr = 0; 
+
+//X and Y Position
+long int x = 0;
+long int y = 0; 
+
+
+void setup() {
+  // Set up I2C pin assignment and start serial 
   pinMode(13, OUTPUT);
-  Serial.begin(38400);
-  
+  Serial.begin(9600);
+
   //initialize i2c as slave
-  //Wire.begin(SLAVE_ADDRESS);
+  Wire.begin(SLAVE_ADDRESS);
 
-  //define callabcks for i2c communication
-  //Wire.onReceive(receiveData);
-  //Wire.onRequest(sendData);
+  //define callbacks for i2c communication
+  Wire.onReceive(receiveData);
+  Wire.onRequest(sendData);
   Serial.println("Ready!");
-
-  //assign Pins I/O Logic
-  pinMode(CLK_R, INPUT_PULLUP);
-  pinMode(DT_R, INPUT_PULLUP);
-  pinMode(CLK_L, INPUT_PULLUP);
-  pinMode(DT_L, INPUT_PULLUP);
-
-  lastStateCLK_R = digitalRead(CLK_R);
-  lastStateCLK_L = digitalRead(CLK_L); 
-  
-  //One interrupt per motor
-  attachInterrupt(digitalPinToInterrupt(CLK_R), updateEncoder_R, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(CLK_L), updateEncoder_L, CHANGE);
-
-  //Motor Setup
-  pinMode(TriStatePin, OUTPUT); 
-  digitalWrite(TriStatePin, HIGH); 
-
-  //Set up outputs
-  pinMode(MotorVoltLeft, OUTPUT); 
-  pinMode(MotorVoltRight, OUTPUT);
-  pinMode(MotorDirLeft, OUTPUT);
-  pinMode(MotorDirRight, OUTPUT);
 }
 
-
-void loop(){
-  
+void loop() {
   Phi_PI_READ = phi_curr;
-  //Serial.print(STATE);
-  
   switch(STATE){
     case 0:
-
-         rho_s = rho;    
         //Don't Change
       break;
-      
     case 1:
      //Find Tape
       phi_des  = 1.8*PI;
@@ -180,218 +127,79 @@ void loop(){
       if(phi_curr > 5){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
-        Phi_PI_READ = 10.69;
-        //Serial.println("Change");
-                
-        //phi_des = (double) ang / 12.0;  
+        Phi_PI_READ = 100;    
+        //phi_des = (double) ang / 12.0;    
       }
-      
        break;
        
-    case 2:
+      case 2:
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
-      phi_des = phi_curr + turn_to*0.01745;
       
-      if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
-        
+      if(((abs(rho - (double) dist/12.0 ) < 1) && dist > 1) && CLOSE == false){// TODO Change based on where camera loses sight.        
         rho_s = rho + 1;
         phi_des = phi_curr;
         CLOSE = true;
-        //Serial.println("No");
-           
-        
+        Serial.println("No");       
       } 
       
-      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
-        
+      if(CLOSE == false){
+        phi_des = phi_curr + ang*0.01745;
         rho_s = rho + (double) dist / 12.0; 
-        //Serial.println("Yay"); 
-      } else{
-        rho_s = rho; 
+        Serial.println("Yay"); 
       }
-      
-      
 
-
-      if(abs(rho - rho_s) < 0.1){
-        
-        //Phi_PI_READ = 10.69;
-        
+      if(rho - rho_s < 0.1){       
+        Phi_PI_READ = 10.69;       
       }
         
         break;
         
       case 3:
-      //Reorient to line up to travel along tape.
-      
+      //Reorient to line up to travel along tape.  
       rho_s = rho;
-      phi_des = (double) ang*0.01745;  
+      phi_des = (double) ang;  
 
-
-      if(abs(phi_des - phi_curr) < 0.1){
+      if(phi_des - phi_curr < 0.1){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
-        //Phi_PI_READ = 10.69;
-
-
-        STATE = 2;
-        Serial.println("Arduino Change State");
-        
-        //phi_des = (double) ang / 12.0; 
-        
-
-        
-      }
-      
+        Phi_PI_READ = 100;
+        //phi_des = (double) ang / 12.0;     
+      }  
         break;
-
      
 
       case 5: //STOP MOVING!
-        
-        rho_s = rho;  
-        
+        rho_s = rho;    
         phi_des = r* ((rad_R) - rad_L) / b;
-
-      
         break;
       
       default: //Data Error
-
-     
-      
         break;
     }
-
-  
   PID_CONTROL(); //Start the PID Control Loop
-
-
-
-  //calculate angular velocity of wheels
-  
- 
 }
 
-void serialEvent(){
-  if(Serial.available() > 0){
-    //data = Serial.read();
-    data = Serial.readStringUntil('\n');
 
-    int j = 0;
-    String st = ("" + data[j++]);
-    int sat = st.toInt();
-    String dis = "";
-    String ag = "";
 
-    
-    for(j = 1; j < 4; j++){
-      dis = dis + data[j];
-    }
-    dist = dis.toInt();
-    Serial.print(dist);
-    
 
-    for(j = 4; j < data.length(); j++){
-      ag = ag + data[j];
-     
-    }
-    ang = ag.toFloat();
-  Serial.flush();
-}
-
-/*
-
-//Recieve data across the i2c bus in the form of (state: 1 byte)(dist: 3 bytes)(angle: 20 bytes)
+//I2C code
 void receiveData(int byteCount){
-  int i = 0;
-  if(byteCount > 1){
-    while(Wire.available()){
-      in_data[i] = Wire.read();
-      //Serial.print(in_data[i]);
-      //Serial.print(' ');
-      i++;
-    }
-    //Serial.print('\n');
-    i--;
-    len = i;
-
-    
-    //Break array into parts
-    int j = 1;
-    if(in_data[j] != 255){
-      if (in_data[j] != 9){
-        STATE = in_data[j];
-      }
-      //Serial.print(in_data[j]);
-      //Serial.print(" ");
-      String now = ""; 
-    
-    //Get the distance
-      for (j = 2; j < 5; j++){
-        now = now + char(in_data[j]);
-      }
-      dist = now.toInt();
-    //Serial.print(dist);
-    //Serial.print(", ang: ");
-
-
-      now = "";
-      for (j = 5; j < 22; j++){
-          now = now + char(in_data[j]);
-      }
-      
-      ang = now.toFloat();
-        //Serial.print(ang);
-      
-      //else{
-        //turn_to = now.toFloat();
-      //}
-    //Serial.print(turn_to);
-    //Serial.print('\n');
-    //Serial.print(", dist: ");
-    }
- 
-  }
   
-  else{
-    read_offset = Wire.read();
-  }
 }
 
 void sendData(){
-  static byte data[32] = {};
-  for(int i = 0; i < 32; i++){
-    data[i] = 0;
-  }
-  String out = String(Phi_PI_READ);
-  //String out_new = out.substring(0,5);
-
-  //Serial.print(out);
-  //Serial.print('\n');
-  for(int i = 0; i < 6; i++){
-    data[i] = out[i];
-  }
-  /*
-  String start_val = String(analogRead(sensorPin));
-  for(int i = 0; i < start_val.length(); i++){
-    data[i] = (int)start_val[i];
-  }
-  
-  //delay(200);
-  Serial.print(data[0]);
-  Wire.write(data, 32);
-  
+  Wire.write((byte*) &out, sizeof(float));
 }
-*/
+
 //******************************************************************************************************************************
 //Nested PID COntroller
 
 void PID_CONTROL(){
     // Outer Loop Time
     int outerLoopTime = micros();
+    
     
     //Phi to phidot control 
 
@@ -403,19 +211,16 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 2){ 
+    if(phi_er < 3){ 
       phi_integral += phi_er;
+    }
 
-     }
-
-     if(STATE == 2){
-      phi_integral = 0;
-     }
     
     //Serial.print("phi_curr = ");
-    //Serial.println(phi_curr);    
-    double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
+    //Serial.println(phi_curr);
 
+    
+    double phi_dot_des = phi_er * Kp + phi_integral * Ki * 0.001;
 
     //Find how far we are from desired location and decide if to keep moving.
 
@@ -436,12 +241,9 @@ void PID_CONTROL(){
     //Serial.println(rho);
     
     rho_dot_des = rho_er * Kp_rho  + Ki_rho * rho_integral*0.001; 
-    
-
-    
+       
     //Serial.print("rho_dot = ");
     //Serial.println(rho);
-
 
     //Inner Loop w/Time
     //Has Code to implement rho dot and phi dot. 
@@ -455,23 +257,18 @@ void PID_CONTROL(){
     
     rho_dot_er = rho_dot_des - rho_dot_curr; 
 
-
     double rho_V = Kp_rho * rho_dot_er;
     //Serial.print("rho_V = ");
     //Serial.println(rho_V);
-
-    
-    
+   
     //Phi dot control 
     static double phi_dot_er;
     phi_dot_er = (r * ((theta_dot_R) - theta_dot_L) / (double) b);
     phi_dot_er = phi_dot_des - phi_dot_er;
 
-
     double phi_dot_V = Kp * phi_dot_er;    
     //Serial.print("phi_dot_V = ");
     //Serial.println(phi_dot_V);   
-
 
     //MOTOR_R write : Va + deltaVa / 2
     double V1 = (rho_V + phi_dot_V)* 0.5;
@@ -490,17 +287,14 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
-    if(STATE == 1 || STATE == 3){
-      if(V1 > 62){
-        V1 = 62;
+    if(STATE == 1){
+      if(V1 > 52){
+        V1 = 52;
       }
     }
 
-
     analogWrite(MotorVoltRight,V1); 
     
-
-
     //MOTOR_Lwrite : Va + deltaVa / 2
     double V2 = (rho_V - phi_dot_V) *0.5;
     //Serial.print("V2 = ");
@@ -518,20 +312,15 @@ void PID_CONTROL(){
       V2 = 255;
     }
 
-    if(STATE == 1 || STATE == 3){
-      if(V2 > 62){
-        V2 = 62;
+    if(STATE == 1){
+      if(V2 > 52){
+        V2 = 52;
       }
     }
 
-
-
     analogWrite(MotorVoltLeft,V2); 
 
-
-    //Keep Track of Position
-    
-
+    //Keep Track of Position   
     x = x + rho_dot_curr*0.0001*cos(phi_curr);
     y = y + rho_dot_curr*0.0001*sin(phi_curr);
 
@@ -539,11 +328,9 @@ void PID_CONTROL(){
     //End Inner Loop
 
     }
-
     while(outerLoopTime + micros() <  500); //Timing for outer Loop control -- 500 microseconds each.
     //End Outer Loop 
 }
-
 
 //***************************************************************************************************************************
 //            Rotate code
@@ -556,12 +343,9 @@ void updateEncoder_R(){
   
   int newTime = micros();
   static int oldTime = 0; 
-  
-
-  
+   
   if (currentStateCLK_R != lastStateCLK_R  && currentStateCLK_R == 1){
-
-    
+  
     if (currentStateDT != currentStateCLK_R) {
       counter_R ++;
     } else {
@@ -575,23 +359,6 @@ void updateEncoder_R(){
     double deltaT = ((newTime-oldTime)*0.000001);
     theta_dot_R = (rad_R - oldRad) / (double) deltaT; 
     
-    
-    
-//     if(rad_R>=6.2831){
-//      rad_R=rad_R-6.2831;
-//      counter_R = 0;
-//    }else if(rad_R<=-6.2831){
-//      rad_R = rad_R+6.2831;
-//      counter_R = 0;
-//
-//    
-//    }
-    
-  
-    //Serial.print(" | counter_R: ");
-    //Serial.println(counter_R);
-    //Serial.println(theta_dot_R);
-    
   }
 
   // Remember last CLK state
@@ -600,6 +367,7 @@ void updateEncoder_R(){
   oldTime = newTime;
 }
 
+
 void updateEncoder_L(){
   
   currentStateCLK_L = digitalRead(CLK_L);
@@ -607,42 +375,21 @@ void updateEncoder_L(){
 
   int newTime = micros();
   static int oldTime = 0; 
-  
-
-  
-  if (currentStateCLK_L != lastStateCLK_L  && currentStateCLK_L == 1){
-
     
+  if (currentStateCLK_L != lastStateCLK_L  && currentStateCLK_L == 1){
+   
     if (currentStateDT != currentStateCLK_L) {
       counter_L --;
     } else {
       // Encoder is rotating CW so increment
       counter_L ++;
     }
-
-  
+ 
     double oldRad = rad_L;
 
     rad_L = (counter_L*2*PI)/800;
     double deltaT = ((newTime-oldTime)*0.000001);
     theta_dot_L = (rad_L - oldRad) / (double) deltaT; 
-
-//    
-//     if(rad_L>=6.2831){
-//      rad_L=rad_L-6.2831;
-//      counter_L = 0;
-//    }else if(rad_L<=-6.2831){
-//      rad_L = rad_L+6.2831;
-//      counter_L = 0;
-//
-//    
-//    }
-//    
- 
-    //Serial.print(" | counter_L: ");
-    //Serial.println(counter_L);
-    //Serial.println(theta_dot_L);
-    
   }
 
 
@@ -651,6 +398,4 @@ void updateEncoder_L(){
   // Remember last CLK state
   lastStateCLK_L = currentStateCLK_L;
   static int lastStateDT = currentStateDT; 
-
-  
 }
