@@ -7,13 +7,13 @@ import smbus2 as smbus
 import board
 import math
 import serial
-from PIL import Image
+import os
 #
 
 
 
 #Set address
-ser = serial.Serial('/dev/ttyACM1', 115200)
+ser = serial.Serial('/dev/ttyACM0', 115200)
 #Wait for connection to complete
 #time.sleep(1)
 #
@@ -123,17 +123,15 @@ width = 640
 height = 480
 camera.iso = 200
 camera.resolution = (width, height) #be careful changing this, will screw up opencv image
-camera.framerate = 24
+camera.framerate = 30
+os.system('sudo vcdbg set awb_mode 0')
+time.sleep(2)
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
-#g = camera.awb_gains
-#print(float(g[0]), float(g[1]))
+g = camera.awb_gains
 camera.awb_mode = 'off'
-time.sleep(3)
 #good 304 gains: 1.5, 1.2
-#sudo vcdbg set awb_mode 0
-camera.awb_gains = (1.5, 1.2)
-time.sleep(3)
+camera.awb_gains = g
 print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
 #camera.awb_gains = g
 
@@ -142,7 +140,11 @@ distance = []
 angle = []
 minDistance = 100000
 cameraClose = False
+endTapeClose = False
 stage = 0
+
+lowerBound = (90, 100, 100)
+upperBound = (120, 255, 255)
 
 while(1):
     img = np.empty((height * width * 3,), dtype=np.uint8)
@@ -151,11 +153,6 @@ while(1):
     img[0:130, 0:img.shape[1]] = (0, 0, 0)
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
-    #HSV bounds to isolate blue tape
-    #good vals for 304 at night: 60, 20, 20; 120, 255, 255
-    lowerBound = (60, 20, 20)
-    # 60 20 20
-    upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -175,15 +172,22 @@ while(1):
     avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
     #check if there are values at the bottom of cameras view
     #cv.imwrite('imgThreshold.jpg', imgThresh)
-    isItClose = imgThresh[(height-30):height, 0:width]
+    isStartClose = imgThresh[(height-30):height, 0:width]
+    isEndClose = imgThresh[0:(height-60), 0:width]
     #camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
     
-    #o = camera.add_overlay(closing, layer = 3, alpha = 128, fullscreen = False, window = (1280, 20, 640, 480))
-    if np.count_nonzero(isItClose) is not 0:
+    if np.count_nonzero(isStartClose) is not 0:
         cameraClose = True
         print('wow we\'re close to the tape')
     else:
         cameraClose = False
+    
+    #flag raised if at end of tape
+    if np.count_nonzero(isStartClose) is not 0 and np.count_nonzero(isEndClose) is 0:
+        endTapeClose = True
+        print('wow the of the tape is close')
+    else:
+        endTapeClose = False
     
     #calculating angle
     xFov = 53.5
@@ -214,38 +218,27 @@ while(1):
         #cnt = 0
         stage = 1
         #ang = 0
-        #buildPackage(0, 0, 1)
+        buildPackage(0, 0, 1)
          
-        #time.sleep(1)
-        #ReadfromArduino()
+        time.sleep(1)
+        ReadfromArduino()
   
      
     if stage == 1:
-        #readLS = readNumber(0)
-        #ang = decode(readLS)
-        
-        #print(ang)
-        
-        #if(ang > 10):
-         #   stage = 2
-            
-        #elif ang > 0:
-         #   distance.append(distanceToTape)
-          #  angle.append(ang)
-         buildPackage(0, 0, 1) 
-         time.sleep(1)
-         ReadfromArduino()
-         
          if (distanceToTape < 60) and (distanceToTape > 36):
              print(distanceToTape)
              stage = 2
              buildPackage(distanceToTape,angleX,3)
+             #time.sleep(1)
+             #ReadfromArduino()
+             
     if stage == 2:
         print("Stage 2")
         buildPackage(distanceToTape,angleX,9)
+        ReadfromArduino()
         if(cameraClose):
             stage = 3
-            buildPackage(9,angleX,9)
+            buildPackage(22,angleX,9)
              
     if stage == 3:
         print("done")

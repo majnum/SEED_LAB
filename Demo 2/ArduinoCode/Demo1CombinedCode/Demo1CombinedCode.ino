@@ -164,12 +164,13 @@ void setup(){
 void loop(){
     if (DataRead) {
     int j = 0;
-    String st = "" + data[1];
-    int sat = st.toInt();
+    int st = String(data[1]).toInt();
     String dis = "";
     String ag = "";
-    STATE = sat;
-    Serial.print(STATE);
+    if (st != 9){
+      STATE = st;
+    }
+      
     for(j = 3; (j < 5) && (data[j] != 'n'); j++){
       dis = dis + data[j];
     }
@@ -179,7 +180,9 @@ void loop(){
 
     for(j = j + 1; j < data.length() && (data[j] != 'n'); j++){
       ag = ag + data[j];
-    }
+    } 
+    ang = ag.toFloat();
+    Serial.println(ang);
     
     DataRead = false;
   }
@@ -249,7 +252,8 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-      phi_des = (double) ang*0.01745;  
+      phi_des = phi_curr + (double) ang*0.01745;
+      CLOSE = false;  
 
 
       if(abs(phi_des - phi_curr) < 0.1){
@@ -308,7 +312,6 @@ void serialEvent(){
     
     //ang = ag.toFloat();
   Serial.flush();
-  
   
 }
 }
