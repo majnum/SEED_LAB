@@ -128,7 +128,7 @@ bool CLOSE = false;
  
 void setup(){
   pinMode(13, OUTPUT);
-  Serial.begin(57600);
+  Serial.begin(38400);
   
   //initialize i2c as slave
   Wire.begin(SLAVE_ADDRESS);
@@ -200,7 +200,7 @@ void loop(){
        
       
 
-      if(((abs(rho - (double) dist/12.0 ) < 1) && dist > 1) && CLOSE == false){// TODO Change based on where camera loses sight. 
+      if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
         
         rho_s = rho + 1;
         phi_des = phi_curr;
@@ -217,7 +217,7 @@ void loop(){
       }
 
 
-      if(rho - rho_s < 0.1){
+      if(abs(rho - rho_s) < 0.1){
         
         Phi_PI_READ = 10.69;
         
@@ -232,7 +232,7 @@ void loop(){
       phi_des = (double) turn_to;  
 
 
-      if(phi_des - phi_curr < 0.1){
+      if(abs(phi_des - phi_curr) < 0.05){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
@@ -297,7 +297,7 @@ void receiveData(int byteCount){
       if (in_data[j] != 9){
         STATE = in_data[j];
       }
-      Serial.print(in_data[j]);
+      //Serial.print(in_data[j]);
       String now = ""; 
     
     //Get the distance
@@ -319,7 +319,8 @@ void receiveData(int byteCount){
       else{
         turn_to = now.toFloat();
       }
-    //Serial.print(ang);
+    Serial.print(ang);
+    Serial.print('\n');
     //Serial.print(", dist: ");
     }
  
@@ -338,6 +339,8 @@ void sendData(){
   String out = String(Phi_PI_READ);
   //String out_new = out.substring(0,5);
 
+  //Serial.print(out);
+  //Serial.print('\n');
   for(int i = 0; i < 6; i++){
     data[i] = out[i];
   }
@@ -451,7 +454,7 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
-    if(STATE == 1){
+    if(STATE == 1 || STATE == 3){
       if(V1 > 62){
         V1 = 62;
       }
@@ -479,7 +482,7 @@ void PID_CONTROL(){
       V2 = 255;
     }
 
-    if(STATE == 1){
+    if(STATE == 1 || STATE == 3){
       if(V2 > 62){
         V2 = 62;
       }
@@ -496,20 +499,10 @@ void PID_CONTROL(){
     x = x + rho_dot_curr*0.0001*cos(phi_curr);
     y = y + rho_dot_curr*0.0001*sin(phi_curr);
 
-    
-
-
-
     while(innerLoopTime + micros() < 100);  //Timing For Inner Control Loop -- 100 Microseconds each
     //End Inner Loop
 
     }
-
-    
-   
-
-
-    
 
     while(outerLoopTime + micros() <  500); //Timing for outer Loop control -- 500 microseconds each.
     //End Outer Loop 

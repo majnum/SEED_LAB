@@ -104,7 +104,7 @@ camera.exposure_mode = 'off'
 #print(float(g[0]), float(g[1]))
 camera.awb_mode = 'off'
 #time.sleep(3)
-camera.awb_gains = (3.0, 0.5)
+camera.awb_gains = (1.5, 1.2)
 time.sleep(3)
 print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
 #camera.awb_gains = g
@@ -120,18 +120,18 @@ while(1):
     img = np.empty((height * width * 3,), dtype=np.uint8)
     camera.capture(img, 'bgr')
     img = img.reshape((height, width, 3))
-    
+    img[0:130, 0:img.shape[1]] = (0, 0, 0)
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (95, 100, 70)
+    lowerBound = (60, 20, 20)
     upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((6,6), np.uint8)
+    kernel = np.ones((3,3), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     
@@ -195,13 +195,34 @@ while(1):
         if(ang > 10):
             stage = 2
             
+        elif ang > 0:
+            distance.append(distanceToTape)
+            angle.append(ang)
+            
     if stage == 2:
-        buildPackage(30,3.14,3)
+        min = 300
+        i = 0
+        ind = 0
+        for d in distance[1:len(distance)]:
+           i = i + 1
+           if d < min:
+               min = d
+               ind = i
+        print(distance[ind])
+        print(angle[ind])
+        print(distance)
+        print(angle)
+        
+        buildPackage(distance[ind],angle[ind],3)
         stage = 3
     
     if stage == 3:
-        buildPackage(int(distanceToTape),int(angleX),9)
         print("hi")
+        #try:
+            #buildPackage(int(distanceToTape),int(angleX),9)
+        #except ValueError:
+            #print("nan")
+        #print("hi")
         
 
 

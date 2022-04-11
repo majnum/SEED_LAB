@@ -119,30 +119,55 @@ time.sleep(2)
     
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
-g = camera.awb_gains
-print(float(g[0]), float(g[1]))
 camera.awb_mode = 'off'
-camera.awb_gains = g
+#time.sleep(3)
+camera.awb_gains = (1.5, 1.2)
+time.sleep(3)
+print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
 
-##camera.stop_preview()
-##take 4 calibration pictures
-##awbRed = [0, 0, 0, 0]
-##awbBlue = [0, 0, 0, 0]
-##for i in range(4):
-##    camera.capture('calibrationPic%d.jpg' %i)
-##    print(camera.awb_gains)
-##    (awbRed[i], awbBlue[i]) = camera.awb_gains
-##    time.sleep(0.5)
-##camera.awb_mode = 'fluorescent'
-#    
-##averaging and setting the AWB values
-##camera.stop_preview()
-##avgRedAwb = sum(awbRed)/len(awbRed)
-##avgBlueAwb = sum(awbBlue)/len(awbBlue)
-##avgAwb = (avgRedAwb, avgBlueAwb)
-##camera.awb_mode = 'off'
-##camera.awb_gains = avgAwb
+#camera.capture('calibrate.jpg')
+#img = cv.imread('calibrate.jpg')
+##img = cv.resize(img, None, fx=0.5, fy=0.5, interpolation = cv.INTER_LINEAR)
+#img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+#cv.namedWindow('yellow')
+#cv.createTrackbar('H lower', 'yellow', 20, 255, nothing)
+#cv.createTrackbar('H upper', 'yellow', 54, 255, nothing)
+#cv.createTrackbar('S lower', 'yellow', 154, 255, nothing)
+#cv.createTrackbar('S upper', 'yellow', 253, 255, nothing)
+#cv.createTrackbar('V lower', 'yellow', 137, 255, nothing)
+#cv.createTrackbar('V upper', 'yellow', 256, 255, nothing)
 #
+#    #loop for trackbars, escape key breaks loop and moves on
+#while(1):
+#        #just in case
+#    try:
+#        cv.imshow('yellow', imgOut)
+#    except:
+#        pass
+#        
+#        #reading trackbar values
+#    hUp = cv.getTrackbarPos('H upper', 'yellow')
+#    hLow = cv.getTrackbarPos('H lower', 'yellow')
+#    sUp = cv.getTrackbarPos('S upper', 'yellow')
+#    sLow = cv.getTrackbarPos('S lower', 'yellow')
+#    vUp = cv.getTrackbarPos('V upper', 'yellow')
+#    vLow = cv.getTrackbarPos('V lower', 'yellow')
+#
+#        #setting color recognition boundaries from trackbars
+#    lowerBound = (hLow, sLow, vLow)
+#    upperBound = (hUp, sUp, vUp)
+#        #creating mask based on bounds
+#    mask = cv.inRange(img2, lowerBound, upperBound)
+#        #and mask with og image to isolate color range selected
+#    imgOut = cv.bitwise_and(img, img, mask = mask)
+#        #cv.imwrite('imgYout.jpg', imgYout)
+#    
+#    k = cv.waitKey(1) & 0xFF
+#    if k == 27:
+#        break
+#    
+#cv.destroyAllWindows()
+
 distanceList = []
 distance = []
 angle = []
@@ -156,21 +181,21 @@ while(1):
     img = img.reshape((height, width, 3))
     
     #set top couple rows of pixels to black to avoid picking up anything not the floor
-    #img[0:200, 0:img.shape[1]] = (0, 0, 0)
+    img[0:130, 0:img.shape[1]] = (0, 0, 0)
     #cv.imwrite('croptest.jpg', img)
     #print('took pic')
     
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
     #HSV bounds to isolate blue tape
-    lowerBound = (95, 100, 70)
+    lowerBound = (60, 20, 20)
     upperBound = (120, 255, 255)
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((6,6), np.uint8)
+    kernel = np.ones((3,3), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     
@@ -287,57 +312,58 @@ while(1):
         ang = decode(readLS)
 
         print(ang)
-#        if ang >= 10:
-#           stage = 2
-#           
-#        else:
-#            angle.append(ang)
-#
-#    #Turn to tape and go forward
-#    if stage == 2:
-#        min = 300
-#        i = 0
-#        ind = 0
-#        for d in distance[1:len(distance)]:
-#           i = i + 1
-#           if d < min:
-#               min = d
-#               ind = i
-#        print(distance)
-#        print(angle)
-#        #print(distance[ind])
-#        #print(angle[ind])
-#        buildPackage(distance[ind],angle[ind],3)
-#        time.sleep(10)
-#        stage = -1
-#       
-#    #Begin feedback cycle between camera and arduino
-#
-#    if stage == 3:
-#        #buildPackage(distance[ind],angle[ind],2)
-#        print("here")
-#        
-#    if stage == 69:
-#        buildPackage(distance[ind],angle[ind],2)
-#        stage = -2
-#        #if distanceToTape != nan:
-#            
-#    if stage == 3:
-#       #Dylan's code here (Wide view providing angle and distance)
-#        #res = (2592, 1936)
-#        #resNp = np.empty((2592 * 1936 * 3,), dtype = np.uint8)
-#        #resTuple = (2592, 1936, 3)
-#        #camera.resolution = res
-#        #camera.framerate = 24
-#       #End Dylan's code
-#        #if dist == nan:
-#        #  stage = 4
-#        #else:
-#        buildPackage(distanceToTape,angleX,2)
-#
-#        #print("here")
-#    #Continue when tape becomes not visable (~1ft)
-#    if stage == 5:
-#       buildPackage(0,0,3)
-#
-#    
+        if ang >= 10:
+           stage = 2
+           
+        else:
+            angle.append(ang)
+
+    #Turn to tape and go forward
+    if stage == 2:
+        min = 300
+        i = 0
+        ind = 0
+        for d in distance[1:len(distance)]:
+           i = i + 1
+           if d < min:
+               min = d
+               ind = i
+        print(distance)
+        print(angle)
+        #print(distance[ind])
+        #print(angle[ind])
+        buildPackage(distance[ind],angle[ind],3)
+        time.sleep(10)
+        stage = -1
+       
+    #Begin feedback cycle between camera and arduino
+
+    if stage == 3:
+        #buildPackage(distance[ind],angle[ind],2)
+        print("here")
+        
+    if stage == 69:
+        buildPackage(distance[ind],angle[ind],2)
+        stage = -2
+        #if distanceToTape != nan:
+            
+    if stage == 3:
+       #Dylan's code here (Wide view providing angle and distance)
+        #res = (2592, 1936)
+        #resNp = np.empty((2592 * 1936 * 3,), dtype = np.uint8)
+        #resTuple = (2592, 1936, 3)
+        #camera.resolution = res
+        #camera.framerate = 24
+       #End Dylan's code
+        #if dist == nan:
+        #  stage = 4
+        #else:
+        buildPackage(distanceToTape,angleX,2)
+
+        #print("here")
+    #Continue when tape becomes not visable (~1ft)
+    if stage == 5:
+       buildPackage(0,0,3)
+
+
+
