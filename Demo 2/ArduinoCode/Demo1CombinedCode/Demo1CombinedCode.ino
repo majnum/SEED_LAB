@@ -38,6 +38,7 @@ float ang = 0;
 float turn_to = 0;
 double Phi_PI_READ = 0;
 String data;
+bool DataRead;
 
 //time variables
 float currentTime = 0;
@@ -66,6 +67,7 @@ long int y = 0;
 
 void updateEncoder_R();
 void updateEncoder_L();
+void PID_CONTROL();
 
 
 //wheel constants
@@ -124,7 +126,7 @@ bool CLOSE = false;
  
 void setup(){
   pinMode(13, OUTPUT);
-  Serial.begin(38400);
+  Serial.begin(115200);
   
   //initialize i2c as slave
   //Wire.begin(SLAVE_ADDRESS);
@@ -132,7 +134,7 @@ void setup(){
   //define callabcks for i2c communication
   //Wire.onReceive(receiveData);
   //Wire.onRequest(sendData);
-  Serial.println("Ready!");
+  //Serial.println("Ready!");
 
   //assign Pins I/O Logic
   pinMode(CLK_R, INPUT_PULLUP);
@@ -160,7 +162,27 @@ void setup(){
 
 
 void loop(){
-  
+    if (DataRead) {
+    int j = 0;
+    String st = "" + data[1];
+    int sat = st.toInt();
+    String dis = "";
+    String ag = "";
+    STATE = sat;
+    Serial.print(STATE);
+    for(j = 3; (j < 5) && (data[j] != 'n'); j++){
+      dis = dis + data[j];
+    }
+    dist = dis.toInt();
+    //Serial.print(dist);
+    
+
+    for(j = j + 1; j < data.length() && (data[j] != 'n'); j++){
+      ag = ag + data[j];
+    }
+    
+    DataRead = false;
+  }
   Phi_PI_READ = phi_curr;
   //Serial.print(STATE);
   
@@ -271,35 +293,24 @@ void loop(){
 
 
   //calculate angular velocity of wheels
-  
- 
 }
 
+
+
 void serialEvent(){
+  
   if(Serial.available() > 0){
+    
     //data = Serial.read();
     data = Serial.readStringUntil('\n');
-
-    int j = 0;
-    String st = ("" + data[j++]);
-    int sat = st.toInt();
-    String dis = "";
-    String ag = "";
-
+    //Serial.print(data);
+    DataRead = true;
     
-    for(j = 1; j < 4; j++){
-      dis = dis + data[j];
-    }
-    dist = dis.toInt();
-    Serial.print(dist);
-    
-
-    for(j = 4; j < data.length(); j++){
-      ag = ag + data[j];
-     
-    }
-    ang = ag.toFloat();
+    //ang = ag.toFloat();
   Serial.flush();
+  
+  
+}
 }
 
 /*

@@ -2,7 +2,7 @@ import serial
 import time
 
 #Set address
-ser = serial.Serial('/dev/ttyACM0', 115200)
+ser = serial.Serial('/dev/ttyACM1', 115200)
 #Wait for connection to complete
 time.sleep(3)
 

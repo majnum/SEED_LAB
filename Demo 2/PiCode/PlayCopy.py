@@ -6,19 +6,35 @@ import glob
 import smbus2 as smbus
 import board
 import math
+import serial
 from PIL import Image
 #
+
+
+
+#Set address
+ser = serial.Serial('/dev/ttyACM1', 115200)
+#Wait for connection to complete
+#time.sleep(1)
 #
 # Initialise I2C bus.
-i2c = board.I2C()  # uses board.SCL and board.SDA
+#i2c = board.I2C()  # uses board.SCL and board.SDA
 
 # for RPI version 1, use “bus = smbus.SMBus(0)”
-bus = smbus.SMBus(1)
+#bus = smbus.SMBus(1)
 
 # This is the address we setup in the Arduino Program
-address = 0x04
+#address = 0x04
 
 #function that writes a byte array to the I2C wire
+
+def ReadfromArduino():
+    while(ser.in_waiting > 0):
+        try:
+            line = ser.readline().decode('utf-8').rstrip()
+            print("serial output : ", line)
+        except:
+            print("Communication Error")
 def writeNumber(value, offset):
     try:
         bus.write_i2c_block_data(address, offset, value)
@@ -37,28 +53,38 @@ def readNumber(offset=0):
     return number
 
 def buildPackage(dist=0, angle=0, act=0):
-    pack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    blank1 = [0,0,0]
+    blank2 = [0,0,0,0,0,0,0,0,0,0]
+    str_dist = str(int(dist))
+    str_ang = str(angle)
     
-    if act != 255:
-        #Fill pack
-        pack[0] = act
-        str_dist = str(dist)
-        str_ang = str(angle)
-        i = 1
-     
-        for d in str_dist[0:3]:
-            if d != '.':
-                pack[i] = ord(d)
-                i = i + 1
-
-        i = 4
-        for d in str_ang[0:20]:
-            pack[i] = ord(d)
-            i = i + 1
-
-        #Send the byte package
-        writeNumber(pack, 0)
-        
+    message = "0" + str(act) + "n" + str_dist + "n" + str_ang + '\n'
+    #print(message)
+    ser.write(message.encode())
+    
+#def buildPackage(dist=0, angle=0, act=0):
+#    pack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+#    
+#    if act != 255:
+#        #Fill pack
+#        pack[0] = act
+#        str_dist = str(dist)
+#        str_ang = str(angle)
+#        i = 1
+#     
+#        for d in str_dist[0:3]:
+#            if d != '.':
+#                pack[i] = ord(d)
+#                i = i + 1
+#
+#        i = 4
+#        for d in str_ang[0:20]:
+#            pack[i] = ord(d)
+#            i = i + 1
+#
+#        #Send the byte package
+#        writeNumber(pack, 0)
+#        
 def decode(pack):
     ret = 0
     mes = ""
@@ -188,7 +214,11 @@ while(1):
         #cnt = 0
         stage = 1
         #ang = 0
-        buildPackage(0, 0, 1)
+        #buildPackage(0, 0, 1)
+         
+        #time.sleep(1)
+        #ReadfromArduino()
+  
      
     if stage == 1:
         #readLS = readNumber(0)
@@ -202,7 +232,10 @@ while(1):
         #elif ang > 0:
          #   distance.append(distanceToTape)
           #  angle.append(ang)
-            
+         buildPackage(0, 0, 1) 
+         time.sleep(1)
+         ReadfromArduino()
+         
          if (distanceToTape < 60) and (distanceToTape > 36):
              print(distanceToTape)
              stage = 2
