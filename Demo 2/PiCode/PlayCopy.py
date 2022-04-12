@@ -8,7 +8,7 @@ import board
 import math
 import serial
 import os
-#
+
 
 
 
@@ -104,27 +104,27 @@ def decode(pack):
 
 def nothing(x):
     pass
-
-def imgDisp(imgname, img):
-    cv.imshow(imgname, img)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
-    
-
-#set camera to only pick up middle slices - avoids picking up table legs as tape
-#everytime blue is found, calculate distance, store in array
-#shortest distance will be the actual tape instead of blue desk legs/other noise
-
+#
+#def imgDisp(imgname, img):
+#    cv.imshow(imgname, img)
+#    cv.waitKey(0)
+#    cv.destroyAllWindows()
+#
+#    
+#
+##set camera to only pick up middle slices - avoids picking up table legs as tape
+##everytime blue is found, calculate distance, store in array
+##shortest distance will be the actual tape instead of blue desk legs/other noise
+#
 camera = PiCamera()
-camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
-
+##camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
+#
 width = 640
 height = 480
 camera.iso = 200
 camera.resolution = (width, height) #be careful changing this, will screw up opencv image
 camera.framerate = 30
-os.system('sudo vcdbg set awb_mode 0')
+#os.system('sudo vcdbg set awb_mode 0')
 time.sleep(2)
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
@@ -133,8 +133,6 @@ camera.awb_mode = 'off'
 #good 304 gains: 1.5, 1.2
 camera.awb_gains = g
 print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
-#camera.awb_gains = g
-
 distanceList = []
 distance = []
 angle = []
@@ -145,7 +143,7 @@ stage = 0
 
 lowerBound = (90, 100, 100)
 upperBound = (120, 255, 255)
-
+#
 while(1):
     img = np.empty((height * width * 3,), dtype=np.uint8)
     camera.capture(img, 'bgr')
@@ -158,7 +156,7 @@ while(1):
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((3,3), np.uint8)
+    kernel = np.ones((4,4), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     
@@ -234,11 +232,14 @@ while(1):
              
     if stage == 2:
         print("Stage 2")
-        buildPackage(distanceToTape,angleX,9)
-        ReadfromArduino()
-        if(cameraClose):
-            stage = 3
-            buildPackage(22,angleX,9)
+        try:
+            buildPackage(distanceToTape,angleX,9)
+            ReadfromArduino()
+            if(cameraClose):
+                stage = 3
+                buildPackage(22,angleX,9)
+        except ValueError:
+            print("nan")
              
     if stage == 3:
         print("done")

@@ -39,6 +39,7 @@ float turn_to = 0;
 double Phi_PI_READ = 0;
 String data;
 bool DataRead;
+bool stupid = true;
 
 //time variables
 float currentTime = 0;
@@ -182,7 +183,7 @@ void loop(){
       ag = ag + data[j];
     } 
     ang = ag.toFloat();
-    Serial.println(ang);
+    Serial.println(dist);
     
     DataRead = false;
   }
@@ -217,21 +218,37 @@ void loop(){
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
-      phi_des = phi_curr + turn_to*0.01745;
+      phi_des = phi_curr + ang*0.01745;
       
       if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
+        //(double) dist/12.0
         
-        rho_s = rho + 1;
         phi_des = phi_curr;
         CLOSE = true;
+
+        STATE = 4;
+        
+        
+        rho_s = rho + (double) dist/12.0;
+        //CLOSE = true;
+
+        
+
+      //if ((CLOSE == true) && (dist > 0)){
+        //rho_s = rho + (double) dist/12.0;
+      //}
+      
         //Serial.println("No");
            
         
-      } 
+      }
+      if(stupid){
+        
+      }
       
       if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
-        
-        rho_s = rho + (double) dist / 12.0; 
+        //Added 12 to dist
+        rho_s = rho + (double) (dist) / 12.0; 
         //Serial.println("Yay"); 
       } else{
         rho_s = rho; 
@@ -256,7 +273,7 @@ void loop(){
       CLOSE = false;  
 
 
-      if(abs(phi_des - phi_curr) < 0.1){
+      if(abs(phi_des - phi_curr) < 0.07){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         //Phi_PI_READ = 10.69;
@@ -273,7 +290,9 @@ void loop(){
       
         break;
 
-     
+      case 4: 
+          //rho_s = rho + dist;
+          STATE = 5;
 
       case 5: //STOP MOVING!
         
