@@ -218,21 +218,18 @@ void loop(){
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
-      phi_des = phi_curr + ang*0.01745;
+      if(CLOSE == false){ //If not close to destination adjust angle
+        phi_des = phi_curr + ang*0.01745;
+      }
       
-      if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
-        //(double) dist/12.0
-        
+      if((dist  < 12) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         phi_des = phi_curr;
         CLOSE = true;
+        rho_s = rho + ((double) dist/12.0);
+        
+        //STATE = 4; -- Shouldn't be needed, controller will stop at set point.        
+        //rho_s = rho + (double) dist/12.0;
 
-        STATE = 4;
-        
-        
-        rho_s = rho + (double) dist/12.0;
-        //CLOSE = true;
-
-        
 
       //if ((CLOSE == true) && (dist > 0)){
         //rho_s = rho + (double) dist/12.0;
@@ -242,26 +239,29 @@ void loop(){
            
         
       }
+      
       if(stupid){
         
       }
       
       if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
         //Added 12 to dist
-        rho_s = rho + (double) (dist) / 12.0; 
+        rho_s = rho + ((double) (dist) / 12.0); 
+        
         //Serial.println("Yay"); 
-      } else{
-        rho_s = rho; 
-      }
+      } 
+//        else{
+//        rho_s = rho; 
+//      }
       
       
 
 
-      if(abs(rho - rho_s) < 0.1){
-        
-        //Phi_PI_READ = 10.69;
-        
-      }
+//      if(abs(rho - rho_s) < 0.1){
+//        
+//        //Phi_PI_READ = 10.69;
+//        
+//      }
         
         break;
         
@@ -270,7 +270,7 @@ void loop(){
       
       rho_s = rho;
       phi_des = phi_curr + (double) ang*0.01745;
-      CLOSE = false;  
+      CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
 
 
       if(abs(phi_des - phi_curr) < 0.07){
