@@ -5,7 +5,7 @@
 //4/1/2022
 
 //This Program Allows the Pi to set a predefined direction to turn the robot and then have the robot move foward based on data read in by the Pi's Camera.  
-
+//Fudge Factors in case 2. 
 //******************************************************************************************
 //          GLOBAL VARIABLES
 //******************************************************************************************
@@ -103,11 +103,11 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 10.5;
-double Ki = 6.5;
+double Kp = 14.5;
+double Ki = 9.5;
 
-double Kp_rho = 8.5; 
-double Ki_rho = 5.5;
+double Kp_rho = 7; 
+double Ki_rho = 4.5;
 
 //Angle Desired
 double phi_des = 0; 
@@ -189,6 +189,8 @@ void loop(){
   }
   Phi_PI_READ = phi_curr;
   //Serial.print(STATE);
+
+  static int i = 0; 
   
   switch(STATE){
     case 0:
@@ -222,17 +224,14 @@ void loop(){
         phi_des = phi_curr + ang*0.01745;
       }
       
-      if((dist  < 12) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
-        phi_des = phi_curr;
+      if((dist  < 80 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+        //phi_des = phi_curr;
         CLOSE = true;
-<<<<<<< HEAD
 
-        delay(2000);
-        STATE = 4;
-        
-=======
-        rho_s = rho + ((double) dist/12.0);
->>>>>>> acc326078ef6b326f6eecc00aac2cf4541ab23e7
+        rho_s = rho + ((double) dist/12.0) + 2.8;
+        //Fudge Factors Test 1: - 1 feet
+        //Test 2: +2.8  feet
+
         
         //STATE = 4; -- Shouldn't be needed, controller will stop at set point.        
         //rho_s = rho + (double) dist/12.0;
@@ -247,16 +246,16 @@ void loop(){
         
       }
       
-      if(stupid){
-        
-      }
-      
-      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
-        //Added 12 to dist
-        rho_s = rho + ((double) (dist) / 12.0); 
-        
-        //Serial.println("Yay"); 
-      } 
+//      if(stupid){
+//        
+//      }
+//      
+//      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
+//        //Added 12 to dist
+//        rho_s = rho + ((double) (dist) / 12.0); 
+//        
+//        //Serial.println("Yay"); 
+//      } 
 //        else{
 //        rho_s = rho; 
 //      }
@@ -277,24 +276,23 @@ void loop(){
       
       rho_s = rho;
       phi_des = phi_curr + (double) ang*0.01745;
+      
       CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
 
 
-      if(abs(phi_des - phi_curr) < 0.07){
-        //Send Pi Flag it is time to Transisition
-        //Send 10.69 to pi
-        //Phi_PI_READ = 10.69;
-
-
-        STATE = 2;
-        Serial.println("Arduino Change State");
-        
-        //phi_des = (double) ang / 12.0; 
-        
-
-        
-      }
       
+        
+          if((abs(phi_des - phi_curr) < 0.05) && i > 3){
+
+          STATE = 2;
+          Serial.println("Arduino Change State");
+          
+          } else{
+            i++; 
+          } 
+        
+        
+        //phi_des = (double) ang / 12.0;       
         break;
 
       case 4: 
@@ -443,14 +441,14 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 2){ 
+    if(phi_er < 0.5){ 
       phi_integral += phi_er;
 
      }
 
-     if(STATE == 2){
+    if(STATE == 2){
       phi_integral = 0;
-     }
+    }
     
     //Serial.print("phi_curr = ");
     //Serial.println(phi_curr);    
@@ -471,6 +469,8 @@ void PID_CONTROL(){
     if(rho_er < 2){
       rho_integral += rho_er;
     }
+
+    
 
     //Serial.print("rho_curr = ");
     //Serial.println(rho);
@@ -530,7 +530,7 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
-    if(STATE == 1 || STATE == 3){
+    if(STATE == 1){
       if(V1 > 62){
         V1 = 62;
       }
@@ -558,7 +558,7 @@ void PID_CONTROL(){
       V2 = 255;
     }
 
-    if(STATE == 1 || STATE == 3){
+    if(STATE == 1){
       if(V2 > 62){
         V2 = 62;
       }

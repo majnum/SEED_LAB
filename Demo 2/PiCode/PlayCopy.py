@@ -125,12 +125,12 @@ camera.iso = 200
 camera.resolution = (width, height) #be careful changing this, will screw up opencv image
 camera.framerate = 30
 #os.system('sudo vcdbg set awb_mode 0')
-time.sleep(2)
+time.sleep(3)
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
 g = camera.awb_gains
+#g = (1.35, 1.7)
 camera.awb_mode = 'off'
-#good 304 gains: 1.5, 1.2
 camera.awb_gains = g
 print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
 distanceList = []
@@ -223,7 +223,7 @@ while(1):
   
      
     if stage == 1:
-         if (distanceToTape < 60) and (distanceToTape > 36):
+         if (distanceToTape < 65) and (distanceToTape > 36):
              print(distanceToTape)
              stage = 2
              buildPackage(distanceToTape,angleX,3)
