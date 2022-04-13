@@ -9,9 +9,6 @@ import math
 import serial
 import os
 
-
-
-
 #Set address
 ser = serial.Serial('/dev/ttyACM0', 115200)
 #Wait for connection to complete
@@ -101,35 +98,22 @@ def decode(pack):
 
     return ret
 
-
 def nothing(x):
     pass
-#
-#def imgDisp(imgname, img):
-#    cv.imshow(imgname, img)
-#    cv.waitKey(0)
-#    cv.destroyAllWindows()
-#
-#    
-#
-##set camera to only pick up middle slices - avoids picking up table legs as tape
-##everytime blue is found, calculate distance, store in array
-##shortest distance will be the actual tape instead of blue desk legs/other noise
-#
+
 camera = PiCamera()
-##camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
-#
+#camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480)) #useful for seeing what camera is seeing
+#this resolution processes quickly and is still pretty accurate
 width = 640
 height = 480
-camera.iso = 200
+camera.iso = 200 #good for brown 304/305
 camera.resolution = (width, height) #be careful changing this, will screw up opencv image
 camera.framerate = 30
-#os.system('sudo vcdbg set awb_mode 0')
+#os.system('sudo vcdbg set awb_mode 0') #this line will break things
 time.sleep(3)
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
 g = camera.awb_gains
-#g = (1.35, 1.7)
 camera.awb_mode = 'off'
 camera.awb_gains = g
 print(float(camera.awb_gains[0]), float(camera.awb_gains[1]))
@@ -141,16 +125,20 @@ cameraClose = False
 endTapeClose = False
 stage = 0
 
+#HSV bounds for mask and finding tape
 lowerBound = (90, 100, 100)
 upperBound = (120, 255, 255)
-#
+
+#main loop controlling Edgar
 while(1):
+    #capturing directly to an openCV object / numpy array
     img = np.empty((height * width * 3,), dtype=np.uint8)
     camera.capture(img, 'bgr')
     img = img.reshape((height, width, 3))
     img[0:130, 0:img.shape[1]] = (0, 0, 0)
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     
+    #isolating blue
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
@@ -164,16 +152,15 @@ while(1):
     imgGray = cv.cvtColor(closing, cv.COLOR_BGR2GRAY)
     ret, imgThresh = cv.threshold(imgGray, 40, 255, cv.THRESH_BINARY)
     sideBySide = np.concatenate((img, imgOut, closing), axis=1) #for troubleshooting/calibrating
-    #sideBySide = cv.resize(sideBySide, None, fx=0.3, fy=0.3, interpolation = cv.INTER_LINEAR)
-    cv.imwrite('prePostFilter.jpg', sideBySide)
+    cv.imwrite('prePostFilter.jpg', sideBySide) #very useful for debugging
     nonZero = imgThresh.nonzero()        
     avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
-    #check if there are values at the bottom of cameras view
-    #cv.imwrite('imgThreshold.jpg', imgThresh)
-    isStartClose = imgThresh[(height-30):height, 0:width]
-    isEndClose = imgThresh[0:(height-60), 0:width]
-    #camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
     
+    #flags that we can raise for start of tape and end of tape - didn't end up being used for this demo
+    isStartClose = imgThresh[(height-30):height, 0:width]
+    isEndClose = imgThresh[0:(height-60), 0:width]    
+    
+    #flag for being close to the start of tape
     if np.count_nonzero(isStartClose) is not 0:
         cameraClose = True
         print('wow we\'re close to the tape')
@@ -189,12 +176,11 @@ while(1):
     
     #calculating angle
     xFov = 53.5
-    yFov = 41.41    
-    imgCenterX = closing.shape[1]/2
-    
+    yFov = 41.41
+    imgCenterX = closing.shape[1]/2    
     imgCenterY = closing.shape[0]/2    
     centerToCenterX = avg[1] - imgCenterX
-    centerToCenterY = avg[0] - imgCenterY #<- since i cropped out top half of image
+    centerToCenterY = avg[0] - imgCenterY
     angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
     angleY = (yFov / 2) * (centerToCenterY / imgCenterY) 
     
@@ -204,12 +190,14 @@ while(1):
     #calculate approximate distance to tape center
     angleCam = 13 #degrees
     cameraHyp = 6.75 + 1.3 #inches plus fudge
+    #weird trig to calculate distance - law of cosines mostly I think
     distanceToTape = math.sin(math.radians(90 - angleY)) * cameraHyp / (math.sin(math.radians(angleY + angleCam)))
 
     print('X angle: ', angleX)
     print('Y angle: ', angleY)
     print('this distance: ', distanceToTape)
     
+    #finite state machine
     if stage == 0:
         #distance = []
         #angle = []
