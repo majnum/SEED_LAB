@@ -1,11 +1,11 @@
-//******************************************************************************************
+ //******************************************************************************************
 //Combined Arduino Code for Demo 2
 //******************************************************************************************
 //By Eli Ball & Joey Thurman & Joshua Higgins
 //4/1/2022
 
 //This Program Allows the Pi to set a predefined direction to turn the robot and then have the robot move foward based on data read in by the Pi's Camera.  
-
+//Fudge Factors in case 2. 
 //******************************************************************************************
 //          GLOBAL VARIABLES
 //******************************************************************************************
@@ -38,6 +38,8 @@ float ang = 0;
 float turn_to = 0;
 double Phi_PI_READ = 0;
 String data;
+bool DataRead;
+bool stupid = true;
 
 //time variables
 float currentTime = 0;
@@ -66,6 +68,7 @@ long int y = 0;
 
 void updateEncoder_R();
 void updateEncoder_L();
+void PID_CONTROL();
 
 
 //wheel constants
@@ -100,11 +103,11 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 10.5;
-double Ki = 6.5;
+double Kp = 18.5;
+double Ki = 1.5;
 
-double Kp_rho = 8.5; 
-double Ki_rho = 5.5;
+double Kp_rho = 12; 
+double Ki_rho = 4.5;
 
 //Angle Desired
 double phi_des = 0; 
@@ -124,7 +127,7 @@ bool CLOSE = false;
  
 void setup(){
   pinMode(13, OUTPUT);
-  Serial.begin(38400);
+  Serial.begin(115200);
   
   //initialize i2c as slave
   //Wire.begin(SLAVE_ADDRESS);
@@ -132,7 +135,7 @@ void setup(){
   //define callabcks for i2c communication
   //Wire.onReceive(receiveData);
   //Wire.onRequest(sendData);
-  Serial.println("Ready!");
+  //Serial.println("Ready!");
 
   //assign Pins I/O Logic
   pinMode(CLK_R, INPUT_PULLUP);
@@ -160,9 +163,34 @@ void setup(){
 
 
 void loop(){
-  
+    if (DataRead) {
+    int j = 0;
+    int st = String(data[1]).toInt();
+    String dis = "";
+    String ag = "";
+    if (st != 9){
+      STATE = st;
+    }
+      
+    for(j = 3; (j < 5) && (data[j] != 'n'); j++){
+      dis = dis + data[j];
+    }
+    dist = dis.toInt();
+    //Serial.print(dist);
+    
+
+    for(j = j + 1; j < data.length() && (data[j] != 'n'); j++){
+      ag = ag + data[j];
+    } 
+    ang = ag.toFloat();
+    Serial.println(dist);
+    
+    DataRead = false;
+  }
   Phi_PI_READ = phi_curr;
   //Serial.print(STATE);
+
+  static int i = 0; 
   
   switch(STATE){
     case 0:
@@ -192,34 +220,54 @@ void loop(){
 
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
-      phi_des = phi_curr + turn_to*0.01745;
+      if(CLOSE == false){ //If not close to destination adjust angle
+        phi_des = phi_curr + ang*0.01745;
+      }
       
-      if(((abs(rho - (double) dist/12.0 ) < 1) && (dist > 0) && (CLOSE == false))){// TODO Change based on where camera loses sight. 
-        
-        rho_s = rho + 1;
-        phi_des = phi_curr;
+      if((dist  < 80 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+        //phi_des = phi_curr;
         CLOSE = true;
+
+        rho_s = rho + ((double) dist/12.0) - 1;
+        //Fudge Factors Test 1: - 1 feet
+        //Test 2: +2.8  feet
+
+        
+        //STATE = 4; -- Shouldn't be needed, controller will stop at set point.        
+        //rho_s = rho + (double) dist/12.0;
+
+
+      //if ((CLOSE == true) && (dist > 0)){
+        //rho_s = rho + (double) dist/12.0;
+      //}
+      
         //Serial.println("No");
            
         
-      } 
-      
-      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
-        
-        rho_s = rho + (double) dist / 12.0; 
-        //Serial.println("Yay"); 
-      } else{
-        rho_s = rho; 
       }
+      
+//      if(stupid){
+//        
+//      }
+//      
+//      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
+//        //Added 12 to dist
+//        rho_s = rho + ((double) (dist) / 12.0); 
+//        
+//        //Serial.println("Yay"); 
+//      } 
+//        else{
+//        rho_s = rho; 
+//      }
       
       
 
 
-      if(abs(rho - rho_s) < 0.1){
-        
-        //Phi_PI_READ = 10.69;
-        
-      }
+//      if(abs(rho - rho_s) < 0.1){
+//        
+//        //Phi_PI_READ = 10.69;
+//        
+//      }
         
         break;
         
@@ -227,6 +275,7 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
+<<<<<<< HEAD
       phi_des = phi_curr + (double) ang*0.01745;  
       CLOSE = false; 
 
@@ -235,20 +284,31 @@ void loop(){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         //Phi_PI_READ = 10.69;
-
-
-        STATE = 2;
-        Serial.println("Arduino Change State");
-        
-        //phi_des = (double) ang / 12.0; 
-        
-
-        
-      }
+=======
+      phi_des = phi_curr + (double) ang*0.01745;
       
+      CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
+>>>>>>> 4e748bd9c558cd83b9404d2466d2f19bea6fc8b2
+
+
+      
+        
+          if((abs(phi_des - phi_curr) < 0.05) && i > 2){
+
+          STATE = 2;
+          Serial.println("Arduino Change State");
+          
+          } else{
+            i++; 
+          } 
+        
+        
+        //phi_des = (double) ang / 12.0;       
         break;
 
-     
+      case 4: 
+          //rho_s = rho + dist;
+          STATE = 5;
 
       case 5: //STOP MOVING!
         
@@ -272,35 +332,23 @@ void loop(){
 
 
   //calculate angular velocity of wheels
-  
- 
 }
 
+
+
 void serialEvent(){
+  
   if(Serial.available() > 0){
+    
     //data = Serial.read();
     data = Serial.readStringUntil('\n');
-
-    int j = 0;
-    String st = ("" + data[j++]);
-    int sat = st.toInt();
-    String dis = "";
-    String ag = "";
-
+    //Serial.print(data);
+    DataRead = true;
     
-    for(j = 1; j < 4; j++){
-      dis = dis + data[j];
-    }
-    dist = dis.toInt();
-    Serial.print(dist);
-    
-
-    for(j = 4; j < data.length(); j++){
-      ag = ag + data[j];
-     
-    }
-    ang = ag.toFloat();
+    //ang = ag.toFloat();
   Serial.flush();
+  
+}
 }
 
 /*
@@ -404,14 +452,14 @@ void PID_CONTROL(){
     phi_curr = r* ((rad_R) - rad_L) / b; 
     phi_er = phi_des - phi_curr;
 
-    if(phi_er < 2){ 
+    if(phi_er < 0.5){ 
       phi_integral += phi_er;
 
      }
 
-     if(STATE == 2){
+    if(STATE == 2){
       phi_integral = 0;
-     }
+    }
     
     //Serial.print("phi_curr = ");
     //Serial.println(phi_curr);    
@@ -432,6 +480,8 @@ void PID_CONTROL(){
     if(rho_er < 2){
       rho_integral += rho_er;
     }
+
+    
 
     //Serial.print("rho_curr = ");
     //Serial.println(rho);
@@ -491,7 +541,7 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
-    if(STATE == 1 || STATE == 3){
+    if(STATE == 1){
       if(V1 > 62){
         V1 = 62;
       }
@@ -519,7 +569,7 @@ void PID_CONTROL(){
       V2 = 255;
     }
 
-    if(STATE == 1 || STATE == 3){
+    if(STATE == 1){
       if(V2 > 62){
         V2 = 62;
       }

@@ -108,7 +108,7 @@ def imgDisp(imgname, img):
 #shortest distance will be the actual tape instead of blue desk legs/other noise
 
 camera = PiCamera()
-camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
+#camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
 
 width = 640
 height = 480
@@ -116,6 +116,7 @@ camera.iso = 200
 camera.resolution = (width, height) #be careful changing this, will screw up opencv image
 camera.framerate = 24
 time.sleep(2)
+print('made it to 110')
     
 camera.shutter_speed = camera.exposure_speed
 camera.exposure_mode = 'off'
@@ -367,3 +368,4 @@ while(1):
 
 
 
+i
