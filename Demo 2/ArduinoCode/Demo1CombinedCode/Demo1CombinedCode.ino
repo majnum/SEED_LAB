@@ -103,10 +103,10 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 14.5;
-double Ki = 9.5;
+double Kp = 18.5;
+double Ki = 1.5;
 
-double Kp_rho = 7; 
+double Kp_rho = 12; 
 double Ki_rho = 4.5;
 
 //Angle Desired
@@ -228,7 +228,7 @@ void loop(){
         //phi_des = phi_curr;
         CLOSE = true;
 
-        rho_s = rho + ((double) dist/12.0) + 2.8;
+        rho_s = rho + ((double) dist/12.0) - 1;
         //Fudge Factors Test 1: - 1 feet
         //Test 2: +2.8  feet
 
@@ -282,7 +282,7 @@ void loop(){
 
       
         
-          if((abs(phi_des - phi_curr) < 0.05) && i > 3){
+          if((abs(phi_des - phi_curr) < 0.05) && i > 2){
 
           STATE = 2;
           Serial.println("Arduino Change State");
