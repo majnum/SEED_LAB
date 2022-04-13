@@ -227,7 +227,8 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-      phi_des = (double) ang*0.01745;  
+      phi_des = phi_curr + (double) ang*0.01745;  
+      CLOSE = false; 
 
 
       if(abs(phi_des - phi_curr) < 0.1){
