@@ -50,7 +50,7 @@ def nothing(x):
     pass
 
 camera = PiCamera()
-#camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480)) #useful for seeing what camera is seeing
+camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
 #this resolution processes quickly and is still pretty accurate
 width = 640
 height = 480
