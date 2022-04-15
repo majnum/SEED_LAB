@@ -117,7 +117,7 @@ def nothing(x):
 ##shortest distance will be the actual tape instead of blue desk legs/other noise
 #
 camera = PiCamera()
-##camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
+camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480))
 #
 width = 640
 height = 480
