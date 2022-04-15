@@ -1,32 +1,3 @@
-% %% Turning system parameters
-% 
-% K_phi = 1;
-% sigma_phi = 10;
-% 
-% %% Forward system parameters
-% 
-% K_rho = 1;
-% sigma_rho = 10;
-% 
-% %% Forward Speed Setpoint
-% 
-% rhodot_d = 0.1; % [ft/s]
-% 
-% %% Initial Conditions
-% 
-% x_0 = 0; y_0 = 0; phi_0 = 0;
-% 
-% %% Line Parameters
-% x_s = [0 3 6 10];
-% y_s = [0 0 3 3];
-% 
-% %%
-% 
-% sim('Demo2ControlSimulation')
-% 
-% animate
-% 
-% %%%   
 
 %%Step Experiment to find inner Loop controller
 % Group Team 9 
@@ -83,11 +54,11 @@ ylabel('Velocity (rad/s)');
 % less than 10% overshoot.
 
 % Open Closed Loop step response simulation
-open_system('RunRhoStepExperiment')
+open_system('RunDemo2InnerControl')
 %
 % Run the simulation
 %
-out=sim('RunRhoStepExperiment');
+out=sim('RunDemo2InnerControl');
 
 % Plot the Results for both Wheels
 

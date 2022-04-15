@@ -27,11 +27,11 @@ sigma = 3.3;
 % Open the block diagram so it appears in the documentation when published.
 % Make sure the block diagram is closed before running the publish function
 %
-open_system('RunFinalDemo1ControlCode')
+open_system('RunDemo2OuterControl')
 %
 % run the simulation
 %
-out=sim('RunFinalDemo1ControlCode');
+out=sim('RunDemo2OuterControl');
 
 %% Plot the results 
 
