@@ -1,3 +1,6 @@
+#PlayCopy is responsible for recieving information from the camera, performing filtering, 
+#and sending the appropriate distance, state, and angle to the arduino through the Serial 
+
 from picamera import PiCamera
 import cv2 as cv
 import numpy as np
@@ -11,20 +14,8 @@ import os
 
 #Set address
 ser = serial.Serial('/dev/ttyACM0', 115200)
-#Wait for connection to complete
-#time.sleep(1)
-#
-# Initialise I2C bus.
-#i2c = board.I2C()  # uses board.SCL and board.SDA
 
-# for RPI version 1, use “bus = smbus.SMBus(0)”
-#bus = smbus.SMBus(1)
-
-# This is the address we setup in the Arduino Program
-#address = 0x04
-
-#function that writes a byte array to the I2C wire
-
+#Read code for recieving info across the Serial
 def ReadfromArduino():
     while(ser.in_waiting > 0):
         try:
@@ -32,13 +23,8 @@ def ReadfromArduino():
             print("serial output : ", line)
         except:
             print("Communication Error")
-def writeNumber(value, offset):
-    try:
-        bus.write_i2c_block_data(address, offset, value)
-    except OSError:
-        print("I2C Write Error")
-        
-    return -1
+
+
 
 #function that reads a byte array off of the I2C wire
 def readNumber(offset=0):
@@ -49,6 +35,7 @@ def readNumber(offset=0):
         print("I2C Read Error")
     return number
 
+#Send angles, states, and distances across the Serial to the Arduino
 def buildPackage(dist=0, angle=0, act=0):
     blank1 = [0,0,0]
     blank2 = [0,0,0,0,0,0,0,0,0,0]
@@ -58,45 +45,6 @@ def buildPackage(dist=0, angle=0, act=0):
     message = "0" + str(act) + "n" + str_dist + "n" + str_ang + '\n'
     #print(message)
     ser.write(message.encode())
-    
-#def buildPackage(dist=0, angle=0, act=0):
-#    pack = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-#    
-#    if act != 255:
-#        #Fill pack
-#        pack[0] = act
-#        str_dist = str(dist)
-#        str_ang = str(angle)
-#        i = 1
-#     
-#        for d in str_dist[0:3]:
-#            if d != '.':
-#                pack[i] = ord(d)
-#                i = i + 1
-#
-#        i = 4
-#        for d in str_ang[0:20]:
-#            pack[i] = ord(d)
-#            i = i + 1
-#
-#        #Send the byte package
-#        writeNumber(pack, 0)
-#        
-def decode(pack):
-    ret = 0
-    mes = ""
-    for val in pack:
-        if val != 0:
-            mes = mes + chr(val)
-    if mes != "":
-        try:
-            ret = float(mes)
-             
-        except ValueError:
-            ret = 0
-            print("VE")
-
-    return ret
 
 def nothing(x):
     pass
@@ -198,6 +146,7 @@ while(1):
     print('this distance: ', distanceToTape)
     
     #finite state machine
+    #Initialization state
     if stage == 0:
         #distance = []
         #angle = []
@@ -206,18 +155,15 @@ while(1):
         #ang = 0
         buildPackage(0, 0, 1)
          
-        time.sleep(1)
-        ReadfromArduino()
-  
-     
+     #Find any blue that is within the acceptable distance and tell the arduino to go to it
     if stage == 1:
          if (distanceToTape < 65) and (distanceToTape > 36):
              print(distanceToTape)
              stage = 2
              buildPackage(distanceToTape,angleX,3)
-             #time.sleep(1)
-             #ReadfromArduino()
-             
+
+    
+    #Update angle and distance values to the Arduino         
     if stage == 2:
         print("Stage 2")
         try:
@@ -228,49 +174,11 @@ while(1):
                 buildPackage(22,angleX,9)
         except ValueError:
             print("nan")
-             
+    
+    # Idle state         
     if stage == 3:
         print("done")
         
-#    if stage == 2:
-#        min = 300
-#        i = 0
-#        ind = 0
-#        for d in distance[1:len(distance)]:
-#           i = i + 1
-#           if d < min:
-#               min = d
-#               ind = i
-#        print(distance[ind])
-#        print(angle[ind])
-#        print(distance)
-#        print(angle)
-#        
-#        if min != 300:
-#            buildPackage(distance[ind],angle[ind],3)
-#            stage = 3
-#        else:
-#            print("didn't see any tape")
-#            stage = 5
-#    
-#    if stage == 3:
-#        print("hi")
-#        try:
-#            if(cameraClose):
-#                buildPackage(int(distanceToTape),angleX,10)
-#                stage = 4
-#            else:    
-#                buildPackage(int(distanceToTape),angleX,9)
-#        except ValueError:
-#            print("nan")
-#        print("hi")
-        
-        
-    if stage == 4:
-        print("done")
-        
-    if stage == 5:
-        print("IDLE")
         
 
 
