@@ -102,7 +102,7 @@ def nothing(x):
     pass
 
 camera = PiCamera()
-#camera.start_preview(fullscreen = False, window = (1280, 20, 640, 480)) #useful for seeing what camera is seeing
+camera.start_preview(fullscreen = False, window = (1280, 80, 640, 480)) #useful for seeing what camera is seeing
 #this resolution processes quickly and is still pretty accurate
 width = 640
 height = 480
@@ -129,6 +129,9 @@ stage = 0
 lowerBound = (90, 100, 100)
 upperBound = (120, 255, 255)
 
+#lowerBound = (50, 50, 80)
+#upperBound = (120, 255, 255)
+
 #main loop controlling Edgar
 while(1):
     #capturing directly to an openCV object / numpy array
@@ -144,7 +147,7 @@ while(1):
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((4,4), np.uint8)
+    kernel = np.ones((5,5), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     
@@ -153,50 +156,77 @@ while(1):
     ret, imgThresh = cv.threshold(imgGray, 40, 255, cv.THRESH_BINARY)
     sideBySide = np.concatenate((img, imgOut, closing), axis=1) #for troubleshooting/calibrating
     cv.imwrite('prePostFilter.jpg', sideBySide) #very useful for debugging
-    nonZero = imgThresh.nonzero()        
-    avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
+    nonZero = imgThresh.nonzero()    
+    try:
+        avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
+        closest = np.amax(nonZero, axis = 1)
+    except:
+        closest = 0
+        print('saw nothing')
     
     #flags that we can raise for start of tape and end of tape - didn't end up being used for this demo
     isStartClose = imgThresh[(height-30):height, 0:width]
-    isEndClose = imgThresh[0:(height-60), 0:width]    
+    isEndClose = imgThresh[0:(height-60), 0:width]
+    isNinetyComing = imgThresh[300:height, (width-60):width]
     
     #flag for being close to the start of tape
     if np.count_nonzero(isStartClose) is not 0:
         cameraClose = True
-        print('wow we\'re close to the tape')
+        #print('wow we\'re close to the tape')
     else:
         cameraClose = False
     
     #flag raised if at end of tape
     if np.count_nonzero(isStartClose) is not 0 and np.count_nonzero(isEndClose) is 0:
         endTapeClose = True
-        print('wow the of the tape is close')
+        #print('wow the of the tape is close')
     else:
         endTapeClose = False
-    
+
     #calculating angle
     xFov = 53.5
     yFov = 41.41
+    angleCam = 13 #degrees
+    cameraHyp = 6.75 * 0.96 #inches times fudge 
     imgCenterX = closing.shape[1]/2    
-    imgCenterY = closing.shape[0]/2    
-    centerToCenterX = avg[1] - imgCenterX
+    imgCenterY = closing.shape[0]/2
+    
+    centerToCenterX = avg[1] - imgCenterX    
     centerToCenterY = avg[0] - imgCenterY
     angleX = -(xFov / 2) * (centerToCenterX / imgCenterX)
-    angleY = (yFov / 2) * (centerToCenterY / imgCenterY) 
+    angleY = (yFov / 2) * (centerToCenterY / imgCenterY)        
     
-    #if stage == 1: #xFov will be all janky for sweep state, so avoid x angle calculation
-    #    angleX = -1
+    #finding closest part of tape
+    if closest is not 0:
+        centerToClosestY = closest[0] - imgCenterY
+        angleYclosest = (yFov / 2) * (centerToClosestY / imgCenterY)
+        distanceToClosest = math.sin(math.radians(90 - angleYclosest)) * cameraHyp / (math.sin(math.radians(angleYclosest + angleCam)))
+        #print('closest[0]: ', closest[0])
+        print('distance to closest piece of tape', distanceToClosest)
+                    
+    #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
+    if np.count_nonzero(isNinetyComing) is not 0:
+        ninetyComing = True                
+        nonZeroNinety = imgThresh[0:height, (width-60):width].nonzero()
+        avgNinety = np.mean(nonZeroNinety, axis = 1)        
+        centerToCenterYninety = avgNinety[0] - imgCenterY
+        angleYninety = (yFov / 2) * (centerToCenterYninety / imgCenterY)
+        distanceToNinety = math.sin(math.radians(90 - angleYninety)) * cameraHyp / (math.sin(math.radians(angleYninety + angleCam)))
+        print('distance to 90 deg turn: ', distanceToNinety)
+    else:
+        ninetyComing = False
+        angleYninetyComing = -1
     
-    #calculate approximate distance to tape center
-    angleCam = 13 #degrees
-    cameraHyp = 6.75 + 1.3 #inches plus fudge
-    #weird trig to calculate distance - law of cosines mostly I think
+    #weird trig to calculate distance - law of cosines mostly I think    
     distanceToTape = math.sin(math.radians(90 - angleY)) * cameraHyp / (math.sin(math.radians(angleY + angleCam)))
-
-    print('X angle: ', angleX)
-    print('Y angle: ', angleY)
-    print('this distance: ', distanceToTape)
+    if not np.isnan(distanceToTape):
+        print('avg distance: ', distanceToTape)
+        print('avg x angle: ', angleX)        
+        
+    #print('X angle: ', angleX)
+    #print('Y angle: ', angleY)        
     
+    ##############################################
     #finite state machine
     if stage == 0:
         #distance = []
@@ -208,10 +238,9 @@ while(1):
          
         time.sleep(1)
         ReadfromArduino()
-  
-     
+       
     if stage == 1:
-         if (distanceToTape < 65) and (distanceToTape > 36):
+         if (distanceToTape < 62) and (distanceToTape > 36):
              print(distanceToTape)
              stage = 2
              buildPackage(distanceToTape,angleX,3)
