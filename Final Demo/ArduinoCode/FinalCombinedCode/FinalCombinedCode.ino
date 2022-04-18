@@ -30,7 +30,7 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 1;//Finite State Machine
+short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
 int dist = 36;
@@ -163,7 +163,6 @@ void setup(){
 
 
 void loop(){
-    //Extract the distance, angle, and state from the string coming across the Serial line.
     if (DataRead) {
     int j = 0;
     int st = String(data[1]).toInt();
@@ -276,7 +275,7 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-
+<<<<<<< HEAD
       phi_des = phi_curr + (double) ang*0.01745;  
       CLOSE = false; 
 
@@ -285,7 +284,11 @@ void loop(){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         //Phi_PI_READ = 10.69;
-
+=======
+      phi_des = phi_curr + (double) ang*0.01745;
+      
+      CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
+>>>>>>> 4e748bd9c558cd83b9404d2466d2f19bea6fc8b2
 
 
       
@@ -330,10 +333,9 @@ void loop(){
 
   //calculate angular velocity of wheels
 }
-}
 
 
-//Controls the reading of Serial communication across the Serial line.
+
 void serialEvent(){
   
   if(Serial.available() > 0){
@@ -349,6 +351,90 @@ void serialEvent(){
 }
 }
 
+/*
+
+//Recieve data across the i2c bus in the form of (state: 1 byte)(dist: 3 bytes)(angle: 20 bytes)
+void receiveData(int byteCount){
+  int i = 0;
+  if(byteCount > 1){
+    while(Wire.available()){
+      in_data[i] = Wire.read();
+      //Serial.print(in_data[i]);
+      //Serial.print(' ');
+      i++;
+    }
+    //Serial.print('\n');
+    i--;
+    len = i;
+
+    
+    //Break array into parts
+    int j = 1;
+    if(in_data[j] != 255){
+      if (in_data[j] != 9){
+        STATE = in_data[j];
+      }
+      //Serial.print(in_data[j]);
+      //Serial.print(" ");
+      String now = ""; 
+    
+    //Get the distance
+      for (j = 2; j < 5; j++){
+        now = now + char(in_data[j]);
+      }
+      dist = now.toInt();
+    //Serial.print(dist);
+    //Serial.print(", ang: ");
+
+
+      now = "";
+      for (j = 5; j < 22; j++){
+          now = now + char(in_data[j]);
+      }
+      
+      ang = now.toFloat();
+        //Serial.print(ang);
+      
+      //else{
+        //turn_to = now.toFloat();
+      //}
+    //Serial.print(turn_to);
+    //Serial.print('\n');
+    //Serial.print(", dist: ");
+    }
+ 
+  }
+  
+  else{
+    read_offset = Wire.read();
+  }
+}
+
+void sendData(){
+  static byte data[32] = {};
+  for(int i = 0; i < 32; i++){
+    data[i] = 0;
+  }
+  String out = String(Phi_PI_READ);
+  //String out_new = out.substring(0,5);
+
+  //Serial.print(out);
+  //Serial.print('\n');
+  for(int i = 0; i < 6; i++){
+    data[i] = out[i];
+  }
+  /*
+  String start_val = String(analogRead(sensorPin));
+  for(int i = 0; i < start_val.length(); i++){
+    data[i] = (int)start_val[i];
+  }
+  
+  //delay(200);
+  Serial.print(data[0]);
+  Wire.write(data, 32);
+  
+}
+*/
 //******************************************************************************************************************************
 //Nested PID COntroller
 
