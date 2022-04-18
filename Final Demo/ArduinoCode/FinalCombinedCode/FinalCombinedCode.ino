@@ -1,8 +1,8 @@
  //******************************************************************************************
-//Combined Arduino Code for Demo 2
+//Combined Arduino Code for Final Demo
 //******************************************************************************************
 //By Eli Ball & Joey Thurman & Joshua Higgins
-//4/1/2022
+//4/18/2022
 
 //This Program Allows the Pi to set a predefined direction to turn the robot and then have the robot move foward based on data read in by the Pi's Camera.  
 //Fudge Factors in case 2. 
@@ -120,6 +120,7 @@ double rho_s = 0;
 double rho_dot_des = 0; 
 double rho = 0;
 bool CLOSE = false;
+double phi_old = 0; 
 
 //******************************************************************************************
 
@@ -222,13 +223,14 @@ void loop(){
       //Distance and Angle Set by the Pi
       if(CLOSE == false){ //If not close to destination adjust angle
         phi_des = phi_curr + ang*0.01745;
+        rho_s = rho + ((double) dist/12.0);
       }
       
-      if((dist  < 80 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+      if((dist  < 24 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         //phi_des = phi_curr;
         CLOSE = true;
 
-        rho_s = rho + ((double) dist/12.0) - 1;
+        rho_s = rho + ((double) dist/12.0);
         //Fudge Factors Test 1: - 1 feet
         //Test 2: +2.8  feet
 
@@ -245,29 +247,13 @@ void loop(){
            
         
       }
-      
-//      if(stupid){
-//        
-//      }
-//      
-//      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
-//        //Added 12 to dist
-//        rho_s = rho + ((double) (dist) / 12.0); 
-//        
-//        //Serial.println("Yay"); 
-//      } 
-//        else{
-//        rho_s = rho; 
-//      }
-      
+
+      if(abs(rho - rho_s) < 0.01){ //TODO: Add flag for when to stop and not turn right. 
+        phi_old = phi_curr;
+        STATE = 4;
+      }
       
 
-
-//      if(abs(rho - rho_s) < 0.1){
-//        
-//        //Phi_PI_READ = 10.69;
-//        
-//      }
         
         break;
         
@@ -275,20 +261,10 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-<<<<<<< HEAD
-      phi_des = phi_curr + (double) ang*0.01745;  
-      CLOSE = false; 
 
-
-      if(abs(phi_des - phi_curr) < 0.1){
-        //Send Pi Flag it is time to Transisition
-        //Send 10.69 to pi
-        //Phi_PI_READ = 10.69;
-=======
       phi_des = phi_curr + (double) ang*0.01745;
       
       CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
->>>>>>> 4e748bd9c558cd83b9404d2466d2f19bea6fc8b2
 
 
       
@@ -307,8 +283,13 @@ void loop(){
         break;
 
       case 4: 
-          //rho_s = rho + dist;
-          STATE = 5;
+           //Turn 90 degrees right and then listen to the camera angle.
+           rho = rho_s;
+           phi_des = phi_old - (PI) / 2.0; 
+
+           if( abs(phi_curr - phi_des) < 0.05){
+            STATE = 3; 
+           }
 
       case 5: //STOP MOVING!
         
