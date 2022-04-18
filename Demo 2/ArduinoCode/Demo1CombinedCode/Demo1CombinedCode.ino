@@ -30,7 +30,7 @@
 
 //I2C communication variables
 int read_offset = 0;
-short int STATE = 0;//Finite State Machine
+short int STATE = 1;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
 int dist = 36;
@@ -275,7 +275,7 @@ void loop(){
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-<<<<<<< HEAD
+
       phi_des = phi_curr + (double) ang*0.01745;  
       CLOSE = false; 
 
@@ -284,11 +284,7 @@ void loop(){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         //Phi_PI_READ = 10.69;
-=======
-      phi_des = phi_curr + (double) ang*0.01745;
-      
-      CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
->>>>>>> 4e748bd9c558cd83b9404d2466d2f19bea6fc8b2
+
 
 
       
@@ -332,6 +328,7 @@ void loop(){
 
 
   //calculate angular velocity of wheels
+}
 }
 
 
