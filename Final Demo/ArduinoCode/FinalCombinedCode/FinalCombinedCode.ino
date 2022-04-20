@@ -202,7 +202,7 @@ void loop(){
       
     case 1:
      //Find Tape
-      phi_des  = 1.8*PI;
+      phi_des  = -1.8*PI;
       
       rho_s = rho;
       
@@ -226,7 +226,7 @@ void loop(){
         rho_s = rho + ((double) dist/12.0);
       }
       
-      if((dist  < 24 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+      if((dist  < 16 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         //phi_des = phi_curr;
         CLOSE = true;
 
@@ -248,9 +248,21 @@ void loop(){
         
       }
 
-      if(abs(rho - rho_s) < 0.01){ //TODO: Add flag for when to stop and not turn right. 
-        phi_old = phi_curr;
-        STATE = 4;
+      if(abs(rho - rho_s) < 0.01){ //TODO: Add flag for when to stop and not turn right. --- 
+        if(true){ //Turn Right Mode 
+        
+          phi_old = phi_curr;
+          STATE = 4;
+        }
+
+        if(true){ //Stopppp
+          rho_s = rho;
+          phi_des = phi_curr; 
+        }
+
+        if(true) { //Intial MOveee --- Add flags Josh :)
+          STATE = 3; 
+        }
       }
       
 
