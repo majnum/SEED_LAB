@@ -103,10 +103,10 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 18.5;
-double Ki = 1.5;
+double Kp = 30;
+double Ki = 0;
 
-double Kp_rho = 12; 
+double Kp_rho = 14; 
 double Ki_rho = 4.5;
 
 //Angle Desired
@@ -184,7 +184,7 @@ void loop(){
       ag = ag + data[j];
     } 
     ang = ag.toFloat();
-    Serial.println(dist);
+    Serial.println(STATE);
     
     DataRead = false;
   }
@@ -202,7 +202,7 @@ void loop(){
       
     case 1:
      //Find Tape
-      phi_des  = -1.8*PI;
+      phi_des  = 1.8*PI;
       
       rho_s = rho;
       
@@ -222,11 +222,11 @@ void loop(){
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
       if(CLOSE == false){ //If not close to destination adjust angle
-        phi_des = phi_curr + ang*0.01745;
-        rho_s = rho + ((double) dist/12.0);
+        //phi_des = phi_curr + ang*0.01745;
+        rho_s = 1.3; //rho + ((double) dist/12.0);
       }
       
-      if((dist  < 16 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+      if((dist  < 14 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         //phi_des = phi_curr;
         CLOSE = true;
 
@@ -252,7 +252,7 @@ void loop(){
         if(true){ //Turn Right Mode 
         
           phi_old = phi_curr;
-          STATE = 4;
+          //STATE = 4;
         }
 
         if(true){ //Stopppp
@@ -261,7 +261,7 @@ void loop(){
         }
 
         if(true) { //Intial MOveee --- Add flags Josh :)
-          STATE = 3; 
+          //STATE = 3; 
         }
       }
       
@@ -270,21 +270,24 @@ void loop(){
         break;
         
       case 3:
+      //Serial.println(
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
 
+      if(stupid){
       phi_des = phi_curr + (double) ang*0.01745;
-      
+      stupid = false;
+      }
       CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
 
 
-      
-        
-          if((abs(phi_des - phi_curr) < 0.05) && i > 2){
+      //Serial.println(int(ang));
+          Serial.println(int(abs(phi_des - phi_curr)*100)%200);
+          if((abs(phi_des - phi_curr) <= 0.1)){
 
           STATE = 2;
-          Serial.println("Arduino Change State");
+          
           
           } else{
             i++; 

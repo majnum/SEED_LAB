@@ -32,22 +32,8 @@ def ReadfromArduino():
             print("serial output : ", line)
         except:
             print("Communication Error")
-def writeNumber(value, offset):
-    try:
-        bus.write_i2c_block_data(address, offset, value)
-    except OSError:
-        print("I2C Write Error")
-        
-    return -1
+            
 
-#function that reads a byte array off of the I2C wire
-def readNumber(offset=0):
-    try:
-        number = bus.read_i2c_block_data(address, offset, 32)
-    except OSError:
-        number = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        print("I2C Read Error")
-    return number
 
 def buildPackage(dist=0, angle=0, act=0):
     blank1 = [0,0,0]
@@ -56,7 +42,7 @@ def buildPackage(dist=0, angle=0, act=0):
     str_ang = str(angle)
     
     message = "0" + str(act) + "n" + str_dist + "n" + str_ang + '\n'
-    #print(message)
+    print(message)
     ser.write(message.encode())
     
 #def buildPackage(dist=0, angle=0, act=0):
@@ -197,12 +183,16 @@ while(1):
     angleY = (yFov / 2) * (centerToCenterY / imgCenterY)        
     
     #finding closest part of tape
+    distanceToClosest = -1
     if closest is not 0:
         centerToClosestY = closest[0] - imgCenterY
+        centerToClosestX = closest[1] - imgCenterX
         angleYclosest = (yFov / 2) * (centerToClosestY / imgCenterY)
+        angleXclosest = -(xFov / 2) * (centerToClosestX / imgCenterX)
         distanceToClosest = math.sin(math.radians(90 - angleYclosest)) * cameraHyp / (math.sin(math.radians(angleYclosest + angleCam)))
         #print('closest[0]: ', closest[0])
         print('distance to closest piece of tape', distanceToClosest)
+        print('x angle to closest piece of tape', angleXclosest)
                     
     #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
     if np.count_nonzero(isNinetyComing) is not 0:
@@ -229,77 +219,76 @@ while(1):
     ##############################################
     #finite state machine
     if stage == 0:
-        #distance = []
-        #angle = []
-        #cnt = 0
         stage = 1
-        #ang = 0
         buildPackage(0, 0, 1)
          
-        time.sleep(1)
-        ReadfromArduino()
+        
        
     if stage == 1:
-         if (distanceToTape < 62) and (distanceToTape > 36):
-             print(distanceToTape)
+         if (distanceToClosest < 18) and (distanceToClosest > 14):
+             #print(distanceToTape)
              stage = 2
-             buildPackage(distanceToTape,angleX,3)
+             buildPackage(distanceToClosest,angleXclosest,3)
              #time.sleep(1)
              #ReadfromArduino()
-             
+     
     if stage == 2:
         print("Stage 2")
-        try:
-            buildPackage(distanceToTape,angleX,9)
-            ReadfromArduino()
-            if(cameraClose):
-                stage = 3
-                buildPackage(22,angleX,9)
-        except ValueError:
-            print("nan")
-             
+        stage = 3
+       
     if stage == 3:
-        print("done")
-        
-#    if stage == 2:
-#        min = 300
-#        i = 0
-#        ind = 0
-#        for d in distance[1:len(distance)]:
-#           i = i + 1
-#           if d < min:
-#               min = d
-#               ind = i
-#        print(distance[ind])
-#        print(angle[ind])
-#        print(distance)
-#        print(angle)
-#        
-#        if min != 300:
-#            buildPackage(distance[ind],angle[ind],3)
-#            stage = 3
-#        else:
-#            print("didn't see any tape")
-#            stage = 5
-#    
-#    if stage == 3:
-#        print("hi")
+        ReadfromArduino()
 #        try:
+#            buildPackage(distanceToTape,angleX,9)
+#            ReadfromArduino()
 #            if(cameraClose):
-#                buildPackage(int(distanceToTape),angleX,10)
-#                stage = 4
-#            else:    
-#                buildPackage(int(distanceToTape),angleX,9)
+#                stage = 3
+#                buildPackage(22,angleX,9)
 #        except ValueError:
 #            print("nan")
-#        print("hi")
-        
-        
-    if stage == 4:
-        print("done")
-        
-    if stage == 5:
-        print("IDLE")
-        
+#             
+#    if stage == 3:
+#        print("done")
+#        
+##    if stage == 2:
+##        min = 300
+##        i = 0
+##        ind = 0
+##        for d in distance[1:len(distance)]:
+##           i = i + 1
+##           if d < min:
+##               min = d
+##               ind = i
+##        print(distance[ind])
+##        print(angle[ind])
+##        print(distance)
+##        print(angle)
+##        
+##        if min != 300:
+##            buildPackage(distance[ind],angle[ind],3)
+##            stage = 3
+##        else:
+##            print("didn't see any tape")
+##            stage = 5
+##    
+##    if stage == 3:
+##        print("hi")
+##        try:
+##            if(cameraClose):
+##                buildPackage(int(distanceToTape),angleX,10)
+##                stage = 4
+##            else:    
+##                buildPackage(int(distanceToTape),angleX,9)
+##        except ValueError:
+##            print("nan")
+##        print("hi")
+#        
+#        
+#    if stage == 4:
+#        print("done")
+#        
+#    if stage == 5:
+#        print("IDLE")
+#        
 
 
