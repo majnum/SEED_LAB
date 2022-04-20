@@ -7,7 +7,6 @@ import smbus2 as smbus
 import board
 import math
 import serial
-import os
 
 #Set address
 ser = serial.Serial('/dev/ttyACM0', 115200)
@@ -31,9 +30,7 @@ def ReadfromArduino():
             line = ser.readline().decode('utf-8').rstrip()
             print("serial output : ", line)
         except:
-            print("Communication Error")
-            
-
+            print("Communication Error")            
 
 def buildPackage(dist=0, angle=0, act=0):
     blank1 = [0,0,0]
@@ -146,11 +143,12 @@ while(1):
     try:
         avg = np.mean(nonZero, axis = 1) #avg[1] = x, avg[0] = y
         closest = np.amax(nonZero, axis = 1)
+        end = np.amin(nonZero, axis = 1)
     except:
         closest = 0
         print('saw nothing')
     
-    #flags that we can raise for start of tape and end of tape - didn't end up being used for this demo
+    #flags that we can raise for start of tape and end of tape
     isStartClose = imgThresh[(height-30):height, 0:width]
     isEndClose = imgThresh[0:(height-60), 0:width]
     isNinetyComing = imgThresh[300:height, (width-60):width]
@@ -191,8 +189,8 @@ while(1):
         angleXclosest = -(xFov / 2) * (centerToClosestX / imgCenterX)
         distanceToClosest = math.sin(math.radians(90 - angleYclosest)) * cameraHyp / (math.sin(math.radians(angleYclosest + angleCam)))
         #print('closest[0]: ', closest[0])
-        print('distance to closest piece of tape', distanceToClosest)
-        print('x angle to closest piece of tape', angleXclosest)
+        print('distance to closest piece of tape: ', distanceToClosest)
+        print('x angle to closest piece of tape: ', angleXclosest)
                     
     #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
     if np.count_nonzero(isNinetyComing) is not 0:
@@ -206,24 +204,33 @@ while(1):
     else:
         ninetyComing = False
         angleYninetyComing = -1
+        
+    #finding end of tape
+    distanceToEnd = -1
+    try:
+        if end[0] > 100:
+            centerToEndY = end[0] - imgCenterY
+            centerToEndX = end[1] - imgCenterX
+            angleYend = (yFov / 2) * (centerToEndY / imgCenterY)
+            angleXend = -(xFov / 2) * (centerToEndX / imgCenterX)
+            distanceToEnd = math.sin(math.radians(90 - angleYend)) * cameraHyp / (math.sin(math.radians(angleYend + angleCam)))
+            print('distane to end: ', distanceToEnd)                    
+    except:
+        pass
     
-    #weird trig to calculate distance - law of cosines mostly I think    
+    #finding distance to the center of the tape the camera sees
     distanceToTape = math.sin(math.radians(90 - angleY)) * cameraHyp / (math.sin(math.radians(angleY + angleCam)))
     if not np.isnan(distanceToTape):
         print('avg distance: ', distanceToTape)
         print('avg x angle: ', angleX)        
-        
-    #print('X angle: ', angleX)
-    #print('Y angle: ', angleY)        
+    
     
     ##############################################
     #finite state machine
     if stage == 0:
         stage = 1
         buildPackage(0, 0, 1)
-         
-        
-       
+                        
     if stage == 1:
          if (distanceToClosest < 18) and (distanceToClosest > 14):
              #print(distanceToTape)

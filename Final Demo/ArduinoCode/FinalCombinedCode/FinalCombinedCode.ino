@@ -39,7 +39,7 @@ float turn_to = 0;
 double Phi_PI_READ = 0;
 String data;
 bool DataRead;
-bool stupid = true;
+bool Case3Once = true;
 
 //time variables
 float currentTime = 0;
@@ -121,6 +121,7 @@ double rho_dot_des = 0;
 double rho = 0;
 bool CLOSE = false;
 double phi_old = 0; 
+bool Case2Once = true;
 
 //******************************************************************************************
 
@@ -192,6 +193,7 @@ void loop(){
   //Serial.print(STATE);
 
   static int i = 0; 
+  static int j = 0; 
   
   switch(STATE){
     case 0:
@@ -218,51 +220,56 @@ void loop(){
        break;
        
     case 2:
+      static int oldCase2Ang = 0; 
 
+      if(oldCase2Ang != ang){
+        Case2Once = true; 
+      }
+
+      oldCase2Ang = ang; 
+
+
+      if(Case2Once){
+        //phi_des = phi_curr + ang*0.01745;
+        Case2Once = false;
+      }
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
       if(CLOSE == false){ //If not close to destination adjust angle
-        //phi_des = phi_curr + ang*0.01745;
-        rho_s = 1.3; //rho + ((double) dist/12.0);
+        phi_des = phi_curr + ang*0.01745;
+        rho_s = rho + ((double) dist/12.0);
+        CLOSE = true;
       }
       
-      if((dist  < 14 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
-        //phi_des = phi_curr;
+      if((dist  <= 14 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+        phi_des = phi_curr;
         CLOSE = true;
 
-        rho_s = rho + ((double) dist/12.0);
+        rho_s = rho + ((double) dist /12.0);
         //Fudge Factors Test 1: - 1 feet
         //Test 2: +2.8  feet
 
         
-        //STATE = 4; -- Shouldn't be needed, controller will stop at set point.        
-        //rho_s = rho + (double) dist/12.0;
-
-
-      //if ((CLOSE == true) && (dist > 0)){
-        //rho_s = rho + (double) dist/12.0;
-      //}
-      
+            
         //Serial.println("No");
            
         
       }
 
       if(abs(rho - rho_s) < 0.01){ //TODO: Add flag for when to stop and not turn right. --- 
-        if(true){ //Turn Right Mode 
-        
+        if(j == 0){ //Follow Tape 
+          STATE = 3;
+        }
+
+        if((j < 5) && (j > 0)){ //Turn Right
+          STATE = 4;
           phi_old = phi_curr;
-          //STATE = 4;
         }
 
-        if(true){ //Stopppp
-          rho_s = rho;
-          phi_des = phi_curr; 
+        if(j == 5) { //Stop --- Add flags Josh :)
+          STATE = 5; 
         }
-
-        if(true) { //Intial MOveee --- Add flags Josh :)
-          //STATE = 3; 
-        }
+        j++;
       }
       
 
@@ -275,10 +282,11 @@ void loop(){
       
       rho_s = rho;
 
-      if(stupid){
-      phi_des = phi_curr + (double) ang*0.01745;
-      stupid = false;
+      if(Case3Once){
+        phi_des = phi_curr + (double) ang*0.01745;
+        Case3Once = false;
       }
+      
       CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
 
 
