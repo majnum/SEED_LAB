@@ -240,8 +240,10 @@ while(1):
              #ReadfromArduino()
      
     if stage == 2:
-        print("Stage 2")
-        stage = 3
+        buildPackage(distanceToTape,angleX,9)
+        ReadfromArduino()
+        #print("Stage 2")
+        #stage = 3
        
     if stage == 3:
         ReadfromArduino()

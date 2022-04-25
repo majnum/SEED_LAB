@@ -173,7 +173,7 @@ void loop(){
     if (st != 9){
       STATE = st;
     }
-      
+    //Serial.print(data);  
     for(j = 3; (j < 5) && (data[j] != 'n'); j++){
       dis = dis + data[j];
     }
@@ -185,7 +185,7 @@ void loop(){
       ag = ag + data[j];
     } 
     ang = ag.toFloat();
-    Serial.println(STATE);
+    //Serial.println(STATE);
     
     DataRead = false;
   }
@@ -221,7 +221,6 @@ void loop(){
        
     case 2:
       static int oldCase2Ang = 0; 
-
       if(oldCase2Ang != ang){
         Case2Once = true; 
       }
