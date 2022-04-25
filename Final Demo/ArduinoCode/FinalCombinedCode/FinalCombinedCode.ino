@@ -33,7 +33,7 @@ int read_offset = 0;
 short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
-int dist = 36;
+int dist = 0;
 float ang = 0; 
 float turn_to = 0;
 double Phi_PI_READ = 0;
@@ -221,7 +221,7 @@ void loop(){
        
     case 2:
       static int oldCase2Ang = 0; 
-      if(oldCase2Ang != ang){
+      if((oldCase2Ang != ang) && (CLOSE == false)){
         Case2Once = true; 
       }
 
@@ -229,13 +229,13 @@ void loop(){
 
 
       if(Case2Once){
-        //phi_des = phi_curr + ang*0.01745;
+        phi_des = phi_curr + ang*0.01745;
         Case2Once = false;
       }
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
       if(CLOSE == false){ //If not close to destination adjust angle
-        phi_des = phi_curr + ang*0.01745;
+        //phi_des = phi_curr + ang*0.01745;
         rho_s = rho + ((double) dist/12.0);
         //CLOSE = true;  ---- This shouldn't be needed. Makes it so the next if statement will never run. 
       }
