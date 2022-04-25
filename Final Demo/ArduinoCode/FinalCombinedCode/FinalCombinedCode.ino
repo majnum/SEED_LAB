@@ -193,7 +193,7 @@ void loop(){
   //Serial.print(STATE);
 
   static int i = 0; 
-  static int j = 0; 
+  static int turnCount = 0; 
   
   switch(STATE){
     case 0:
@@ -237,7 +237,7 @@ void loop(){
       if(CLOSE == false){ //If not close to destination adjust angle
         phi_des = phi_curr + ang*0.01745;
         rho_s = rho + ((double) dist/12.0);
-        CLOSE = true;
+        //CLOSE = true;  ---- This shouldn't be needed. Makes it so the next if statement will never run. 
       }
       
       if((dist  <= 14 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
@@ -255,20 +255,21 @@ void loop(){
         
       }
 
-      if(abs(rho - rho_s) < 0.01){ //TODO: Add flag for when to stop and not turn right. --- 
-        if(j == 0){ //Follow Tape 
+      if(abs(rho - rho_s) < 0.05){ //TODO: Add flag for when to stop and not turn right. --- 
+        if(turnCount == 0){ //Follow Tape 
           STATE = 3;
+          Case3Once = true; //Resets the boolean in State Three
         }
 
-        if((j < 5) && (j > 0)){ //Turn Right
+        if((turnCount < 5) && (turnCount > 0)){ //Turn Right
           STATE = 4;
           phi_old = phi_curr;
         }
 
-        if(j == 5) { //Stop --- Add flags Josh :)
+        if(turnCount == 5) { //Stop --- Add flags Josh :)
           STATE = 5; 
         }
-        j++;
+        turnCount++;
       }
       
 
