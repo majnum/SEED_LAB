@@ -195,6 +195,7 @@ void loop(){
   static int i = 0; 
   static int turnCount = 0; 
   
+  
   switch(STATE){
     case 0:
 
@@ -204,6 +205,7 @@ void loop(){
       
     case 1:
      //Find Tape
+     Ki = 5; 
       phi_des  = phi_curr - 1.8*PI;
       
       rho_s = rho;
@@ -221,7 +223,8 @@ void loop(){
        
     case 2:
       static int oldCase2Ang = 0; 
-      Ki = 35;
+      Kp = 40;
+      Ki = 25;
       
       if((oldCase2Ang != ang) && (CLOSE == false)){
         Case2Once = true; 
@@ -242,7 +245,7 @@ void loop(){
         //CLOSE = true;  ---- This shouldn't be needed. Makes it so the next if statement will never run. 
       }
       
-      if((dist  <= 14 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+      if((dist  <= 12 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         phi_des = phi_curr;
         CLOSE = true;
 
@@ -309,12 +312,15 @@ void loop(){
 
       case 4: 
            //Turn 90 degrees right and then listen to the camera angle.
+           Ki = 10;
            rho = rho_s;
-           phi_des = phi_old + (PI) / 2.0; 
+           phi_des = phi_old + 1.57; 
 
            if( abs(phi_curr - phi_des) < 0.05){
-            STATE = 3; 
+            STATE = 2; 
            }
+
+           break; 
 
       case 5: //STOP MOVING!
         
@@ -547,7 +553,7 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
-    if(STATE == 1){
+    if(STATE == 1 || STATE == 4){
       if(V1 > 62){
         V1 = 62;
       }
@@ -575,7 +581,7 @@ void PID_CONTROL(){
       V2 = 255;
     }
 
-    if(STATE == 1){
+    if(STATE == 1 || STATE == 4){
       if(V2 > 62){
         V2 = 62;
       }

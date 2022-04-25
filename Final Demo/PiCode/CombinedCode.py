@@ -41,7 +41,7 @@ def buildPackage(dist=0, angle=0, act=0):
     except ValueError:
         str_dist = "0"
         str_ang = "0"
-        act = 9
+        act = 0
     message = "0" + str(act) + "n" + str_dist + "n" + str_ang + '\n'
         
     print(message)
@@ -88,6 +88,8 @@ def decode(pack):
 
 def nothing(x):
     pass
+
+ninetyComing = False
 
 camera = PiCamera()
 camera.start_preview(fullscreen = False, window = (1280, 80, 640, 480)) #useful for seeing what camera is seeing
@@ -198,6 +200,7 @@ while(1):
         print('x angle to closest piece of tape: ', angleXclosest)
                     
     #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
+    distanceToNinety = -1
     if np.count_nonzero(isNinetyComing) is not 0:
         ninetyComing = True                
         nonZeroNinety = imgThresh[0:height, (width-60):width].nonzero()
@@ -207,7 +210,6 @@ while(1):
         distanceToNinety = math.sin(math.radians(90 - angleYninety)) * cameraHyp / (math.sin(math.radians(angleYninety + angleCam)))
         print('distance to 90 deg turn: ', distanceToNinety)
     else:
-        ninetyComing = False
         angleYninetyComing = -1
         
     #finding end of tape
@@ -229,6 +231,7 @@ while(1):
         print('avg distance: ', distanceToTape)
         print('avg x angle: ', angleX)        
     
+    hold = 0
     
     ##############################################
     #finite state machine
@@ -245,12 +248,29 @@ while(1):
              #ReadfromArduino()
      
     if stage == 2:
-        buildPackage(distanceToTape,angleX,9)
+        if closest is not 0:
+            buildPackage(distanceToTape,angleX,9)
+            hold = distanceToNinety
+        elif ninetyComing == True:
+            buildPackage(hold,0,4)
+            ninetyComing = False
+         #   stage = 3
+         
         ReadfromArduino()
         #print("Stage 2")
         #stage = 3
        
     if stage == 3:
+        print("death")
+        stage = 4
+        buildPackage(0, 0, 1)
+    
+    if stage == 4:
+        if (distanceToClosest < 18):
+             #print(distanceToTape)
+             stage = 2
+             buildPackage(distanceToClosest,angleXclosest,3)
+        
         ReadfromArduino()
 #        try:
 #            buildPackage(distanceToTape,angleX,9)
