@@ -204,11 +204,11 @@ void loop(){
       
     case 1:
      //Find Tape
-      phi_des  = 1.8*PI;
+      phi_des  = phi_curr - 1.8*PI;
       
       rho_s = rho;
       
-      if(phi_curr > 5){
+      if(abs(phi_curr) > 5){
         //Send Pi Flag it is time to Transisition
         //Send 10.69 to pi
         Phi_PI_READ = 10.69;
@@ -221,6 +221,8 @@ void loop(){
        
     case 2:
       static int oldCase2Ang = 0; 
+      Ki = 7.5;
+      
       if((oldCase2Ang != ang) && (CLOSE == false)){
         Case2Once = true; 
       }
@@ -308,7 +310,7 @@ void loop(){
       case 4: 
            //Turn 90 degrees right and then listen to the camera angle.
            rho = rho_s;
-           phi_des = phi_old - (PI) / 2.0; 
+           phi_des = phi_old + (PI) / 2.0; 
 
            if( abs(phi_curr - phi_des) < 0.05){
             STATE = 3; 
