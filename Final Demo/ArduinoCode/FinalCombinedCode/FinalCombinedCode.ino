@@ -1,8 +1,8 @@
  //******************************************************************************************
-//Combined Arduino Code for Demo 2
+//Combined Arduino Code for Final Demo
 //******************************************************************************************
 //By Eli Ball & Joey Thurman & Joshua Higgins
-//4/1/2022
+//4/18/2022
 
 //This Program Allows the Pi to set a predefined direction to turn the robot and then have the robot move foward based on data read in by the Pi's Camera.  
 //Fudge Factors in case 2. 
@@ -33,13 +33,13 @@ int read_offset = 0;
 short int STATE = 0;//Finite State Machine
 int len = 0;
 int in_data[32] = {};
-int dist = 36;
+int dist = 0;
 float ang = 0; 
 float turn_to = 0;
 double Phi_PI_READ = 0;
 String data;
 bool DataRead;
-bool stupid = true;
+bool Case3Once = true;
 
 //time variables
 float currentTime = 0;
@@ -103,11 +103,11 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 18.5;
-double Ki = 1.5;
+double Kp = 10;
+double Ki = 0.5;
 
-double Kp_rho = 12; 
-double Ki_rho = 4.5;
+double Kp_rho = 5; 
+double Ki_rho = 2.5;
 
 //Angle Desired
 double phi_des = 0; 
@@ -120,6 +120,8 @@ double rho_s = 0;
 double rho_dot_des = 0; 
 double rho = 0;
 bool CLOSE = false;
+double phi_old = 0; 
+bool Case2Once = true;
 
 //******************************************************************************************
 
@@ -171,7 +173,7 @@ void loop(){
     if (st != 9){
       STATE = st;
     }
-      
+    //Serial.print(data);  
     for(j = 3; (j < 5) && (data[j] != 'n'); j++){
       dis = dis + data[j];
     }
@@ -183,7 +185,7 @@ void loop(){
       ag = ag + data[j];
     } 
     ang = ag.toFloat();
-    Serial.println(dist);
+    //Serial.println(STATE);
     
     DataRead = false;
   }
@@ -191,6 +193,7 @@ void loop(){
   //Serial.print(STATE);
 
   static int i = 0; 
+  static int turnCount = 0; 
   
   switch(STATE){
     case 0:
@@ -217,86 +220,82 @@ void loop(){
        break;
        
     case 2:
+      static int oldCase2Ang = 0; 
+      if((oldCase2Ang != ang) && (CLOSE == false)){
+        Case2Once = true; 
+      }
 
+      oldCase2Ang = ang; 
+
+
+      if(Case2Once){
+        phi_des = phi_curr + ang*0.01745;
+        Case2Once = false;
+      }
       //For Moving to the Line of Tape
       //Distance and Angle Set by the Pi
       if(CLOSE == false){ //If not close to destination adjust angle
-        phi_des = phi_curr + ang*0.01745;
+        //phi_des = phi_curr + ang*0.01745;
+        rho_s = rho + ((double) dist/12.0);
+        //CLOSE = true;  ---- This shouldn't be needed. Makes it so the next if statement will never run. 
       }
       
-      if((dist  < 80 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
-        //phi_des = phi_curr;
+      if((dist  <= 14 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+        phi_des = phi_curr;
         CLOSE = true;
 
-        rho_s = rho + ((double) dist/12.0) - 1;
+        rho_s = rho + ((double) dist /12.0);
         //Fudge Factors Test 1: - 1 feet
         //Test 2: +2.8  feet
 
         
-        //STATE = 4; -- Shouldn't be needed, controller will stop at set point.        
-        //rho_s = rho + (double) dist/12.0;
-
-
-      //if ((CLOSE == true) && (dist > 0)){
-        //rho_s = rho + (double) dist/12.0;
-      //}
-      
+            
         //Serial.println("No");
            
         
       }
-      
-//      if(stupid){
-//        
-//      }
-//      
-//      if((CLOSE == false) && (abs(phi_des - phi_curr) < 0.1)){
-//        //Added 12 to dist
-//        rho_s = rho + ((double) (dist) / 12.0); 
-//        
-//        //Serial.println("Yay"); 
-//      } 
-//        else{
-//        rho_s = rho; 
-//      }
-      
+
+      if(abs(rho - rho_s) < 0.05){ //TODO: Add flag for when to stop and not turn right. --- 
+        if(turnCount == 0){ //Follow Tape 
+          STATE = 3;
+          Case3Once = true; //Resets the boolean in State Three
+        }
+
+        if((turnCount < 5) && (turnCount > 0)){ //Turn Right
+          STATE = 4;
+          phi_old = phi_curr;
+        }
+
+        if(turnCount == 5) { //Stop --- Add flags Josh :)
+          STATE = 5; 
+        }
+        turnCount++;
+      }
       
 
-
-//      if(abs(rho - rho_s) < 0.1){
-//        
-//        //Phi_PI_READ = 10.69;
-//        
-//      }
         
         break;
         
       case 3:
+      //Serial.println(
       //Reorient to line up to travel along tape.
       
       rho_s = rho;
-<<<<<<< HEAD
-      phi_des = phi_curr + (double) ang*0.01745;  
-      CLOSE = false; 
 
-
-      if(abs(phi_des - phi_curr) < 0.1){
-        //Send Pi Flag it is time to Transisition
-        //Send 10.69 to pi
-        //Phi_PI_READ = 10.69;
-=======
-      phi_des = phi_curr + (double) ang*0.01745;
+      if(Case3Once){
+        phi_des = phi_curr + (double) ang*0.01745;
+        Case3Once = false;
+      }
       
       CLOSE = false;  //Reset Close Flag Since we want to move to the end of the tape. 
->>>>>>> 4e748bd9c558cd83b9404d2466d2f19bea6fc8b2
 
 
-      
-        
-          if((abs(phi_des - phi_curr) < 0.05) && i > 2){
+      //Serial.println(int(ang));
+          Serial.println(int(abs(phi_des - phi_curr)*100)%200);
+          if((abs(phi_des - phi_curr) <= 0.1)){
 
           STATE = 2;
-          Serial.println("Arduino Change State");
+          
           
           } else{
             i++; 
@@ -307,8 +306,13 @@ void loop(){
         break;
 
       case 4: 
-          //rho_s = rho + dist;
-          STATE = 5;
+           //Turn 90 degrees right and then listen to the camera angle.
+           rho = rho_s;
+           phi_des = phi_old - (PI) / 2.0; 
+
+           if( abs(phi_curr - phi_des) < 0.05){
+            STATE = 3; 
+           }
 
       case 5: //STOP MOVING!
         
