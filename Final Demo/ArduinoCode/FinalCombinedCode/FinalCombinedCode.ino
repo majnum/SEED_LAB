@@ -103,11 +103,11 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 30;
-double Ki = 0;
+double Kp = 10;
+double Ki = 0.5;
 
-double Kp_rho = 14; 
-double Ki_rho = 4.5;
+double Kp_rho = 5; 
+double Ki_rho = 2.5;
 
 //Angle Desired
 double phi_des = 0; 
