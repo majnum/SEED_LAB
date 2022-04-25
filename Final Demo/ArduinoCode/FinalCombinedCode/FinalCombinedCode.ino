@@ -185,7 +185,7 @@ void loop(){
       ag = ag + data[j];
     } 
     ang = ag.toFloat();
-    //Serial.println(STATE);
+    Serial.println(STATE);
     
     DataRead = false;
   }
@@ -291,7 +291,7 @@ void loop(){
 
 
       //Serial.println(int(ang));
-          Serial.println(int(abs(phi_des - phi_curr)*100)%200);
+          //Serial.println(int(abs(phi_des - phi_curr)*100)%200);
           if((abs(phi_des - phi_curr) <= 0.1)){
 
           STATE = 2;

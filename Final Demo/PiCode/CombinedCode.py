@@ -35,10 +35,15 @@ def ReadfromArduino():
 def buildPackage(dist=0, angle=0, act=0):
     blank1 = [0,0,0]
     blank2 = [0,0,0,0,0,0,0,0,0,0]
-    str_dist = str(int(dist))
-    str_ang = str(angle)
-    
+    try:
+        str_dist = str(int(dist))
+        str_ang = str(angle)
+    except ValueError:
+        str_dist = "0"
+        str_ang = "0"
+        act = 0
     message = "0" + str(act) + "n" + str_dist + "n" + str_ang + '\n'
+        
     print(message)
     ser.write(message.encode())
     
