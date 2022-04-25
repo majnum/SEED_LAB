@@ -41,7 +41,7 @@ def buildPackage(dist=0, angle=0, act=0):
     except ValueError:
         str_dist = "0"
         str_ang = "0"
-        act = 0
+        act = 9
     message = "0" + str(act) + "n" + str_dist + "n" + str_ang + '\n'
         
     print(message)
@@ -156,7 +156,7 @@ while(1):
     #flags that we can raise for start of tape and end of tape
     isStartClose = imgThresh[(height-30):height, 0:width]
     isEndClose = imgThresh[0:(height-60), 0:width]
-    isNinetyComing = imgThresh[300:height, (width-60):width]
+    isNinetyComing = imgThresh[350:height, (width-60):width]
     
     #flag for being close to the start of tape
     if np.count_nonzero(isStartClose) is not 0:

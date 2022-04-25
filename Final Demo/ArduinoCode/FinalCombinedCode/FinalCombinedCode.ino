@@ -103,8 +103,8 @@ int deltaTLeft = 0;
 
 
 // Controller parameters
-double Kp = 10;
-double Ki = 0.5;
+double Kp = 22;
+double Ki = 10;
 
 double Kp_rho = 5; 
 double Ki_rho = 2.5;
