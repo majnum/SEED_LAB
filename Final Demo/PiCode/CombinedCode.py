@@ -233,6 +233,16 @@ while(1):
     
     hold = 0
     
+    nonZeroHeight, nonZeroWidth = np.shape(nonZero) 
+#    print('non zero height', nonZeroHeight)
+#    print('non zero width', nonZeroWidth)
+    if nonZeroWidth >= 15000:
+        crossComing = True
+        print('Cross spotted')
+    else:
+        crossComing = False
+    
+    
     ##############################################
     #finite state machine
     if stage == 0:
