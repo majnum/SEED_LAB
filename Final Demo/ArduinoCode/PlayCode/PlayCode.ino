@@ -106,8 +106,8 @@ int deltaTLeft = 0;
 double Kp = 22;
 double Ki = 10;
 
-double Kp_rho = 5; 
-double Ki_rho = 2.5;
+double Kp_rho = 6; 
+double Ki_rho = 0.5;
 
 //Angle Desired
 double phi_des = 0; 
@@ -194,6 +194,7 @@ void loop(){
 
   static int i = 0; 
   static int turnCount = 0; 
+   
   
   switch(STATE){
     case 0:
@@ -221,8 +222,9 @@ void loop(){
        
     case 2:
       static int oldCase2Ang = 0; 
-      Ki = 35;
-      
+      Ki = 19;
+      Kp = 18;
+     
       if((oldCase2Ang != ang) && (CLOSE == false)){
         Case2Once = true; 
       }
@@ -256,20 +258,22 @@ void loop(){
            
         
       }
+      
+      phi_old = phi_curr;
 
       if(abs(rho - rho_s) < 0.05){ //TODO: Add flag for when to stop and not turn right. --- 
         if(turnCount == 0){ //Follow Tape 
-          STATE = 3;
+          //STATE = 3;
           Case3Once = true; //Resets the boolean in State Three
         }
 
         if((turnCount < 5) && (turnCount > 0)){ //Turn Right
-          STATE = 4;
-          phi_old = phi_curr;
+          //STATE = 4;
+          
         }
 
         if(turnCount == 5) { //Stop --- Add flags Josh :)
-          STATE = 5; 
+          //STATE = 5; 
         }
         turnCount++;
       }
@@ -309,12 +313,11 @@ void loop(){
 
       case 4: 
            //Turn 90 degrees right and then listen to the camera angle.
-           rho = rho_s;
-           phi_des = phi_old + (PI) / 2.0; 
+           rho_s = rho + 1;
+           phi_des = phi_curr - 0.05; 
 
-           if( abs(phi_curr - phi_des) < 0.05){
-            STATE = 3; 
-           }
+           
+           break; 
 
       case 5: //STOP MOVING!
         
@@ -487,7 +490,9 @@ void PID_CONTROL(){
       rho_integral += rho_er;
     }
 
-    
+    if(STATE == 4){
+      rho_integral = 0; 
+    }
 
     //Serial.print("rho_curr = ");
     //Serial.println(rho);
@@ -547,7 +552,7 @@ void PID_CONTROL(){
       V1 = 255;
     }
 
-    if(STATE == 1){
+    if(STATE == 1 || STATE == 4){
       if(V1 > 62){
         V1 = 62;
       }
@@ -575,7 +580,7 @@ void PID_CONTROL(){
       V2 = 255;
     }
 
-    if(STATE == 1){
+    if(STATE == 1 || STATE == 4){
       if(V2 > 62){
         V2 = 62;
       }

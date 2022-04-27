@@ -8,6 +8,7 @@ import board
 import math
 import serial
 
+start = time.time()
 #Set address
 ser = serial.Serial('/dev/ttyACM0', 115200)
 #Wait for connection to complete
@@ -258,12 +259,16 @@ while(1):
              #ReadfromArduino()
      
     if stage == 2:
+        if (ninetyComing == True) and (distanceToNinety < 12) and ((time.time() - start) >10):
+            buildPackage(0,0,4)
+            stage = 3
+            
         if closest is not 0:
             buildPackage(distanceToTape,angleX,9)
             hold = distanceToNinety
-        elif ninetyComing == True:
-            buildPackage(hold,0,4)
-            ninetyComing = False
+        #elif ninetyComing == True:
+         #   buildPackage(hold,0,4)
+          #  ninetyComing = False
          #   stage = 3
          
         ReadfromArduino()
@@ -272,8 +277,10 @@ while(1):
        
     if stage == 3:
         print("death")
-        stage = 4
-        buildPackage(0, 0, 1)
+        if distanceToClosest < 15:
+            
+        #stage = 4
+        #buildPackage(0, 0, 1)
     
     if stage == 4:
         if (distanceToClosest < 18):
