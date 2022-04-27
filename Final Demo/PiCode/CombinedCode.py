@@ -114,6 +114,7 @@ angle = []
 minDistance = 100000
 cameraClose = False
 endTapeClose = False
+
 stage = 0
 
 #HSV bounds for mask and finding tape
@@ -126,13 +127,15 @@ upperBound = (120, 255, 255)
 #main loop controlling Edgar
 while(1):
     ninetyComing = False
+    crossComing = False
     #capturing directly to an openCV object / numpy array
     img = np.empty((height * width * 3,), dtype=np.uint8)
     camera.capture(img, 'bgr')
     img = img.reshape((height, width, 3))
     img[0:130, 0:img.shape[1]] = (0, 0, 0)
+    img[0:350, (width-100):width] = (0, 0, 0)
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    
+    cv.imwrite('test.jpg', img)
     #isolating blue
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
@@ -263,6 +266,10 @@ while(1):
              #ReadfromArduino()
      
     if stage == 2:
+        if (crossComing == True) and (time.time() - start > 45):
+            buildPackage(distanceToTape,angleX,9)
+            stage = 5
+        
         if (ninetyComing == True) and (distanceToNinety < 15) and ((time.time() - start) > 20):
             buildPackage(0,0,4)
             stage = 3
@@ -282,7 +289,7 @@ while(1):
        
     if stage == 3:
         print("death")
-        if (distanceToClosest < 15) and ((time.time() - begin) > 6):
+        if (distanceToClosest < 18) and ((time.time() - begin) > 3) and (abs(angleXclosest) <= 18):
             buildPackage(distanceToTape,angleXclosest,2)
             stage = 2
         ReadfromArduino()    
@@ -296,6 +303,9 @@ while(1):
              buildPackage(distanceToClosest,angleXclosest,3)
         
         ReadfromArduino()
+        
+    if stage == 5:
+        print("done")
 #        try:
 #            buildPackage(distanceToTape,angleX,9)
 #            ReadfromArduino()

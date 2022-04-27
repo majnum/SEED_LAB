@@ -315,6 +315,7 @@ void loop(){
            //Turn 90 degrees right and then listen to the camera angle.
            rho_s = rho + 1.5;
            phi_des = phi_curr - 0.1; 
+           CLOSE = false; 
 
            
            break; 
