@@ -106,7 +106,7 @@ int deltaTLeft = 0;
 double Kp = 22;
 double Ki = 10;
 
-double Kp_rho = 6; 
+double Kp_rho = 7.5; 
 double Ki_rho = 0.5;
 
 //Angle Desired

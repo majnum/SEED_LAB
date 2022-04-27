@@ -285,6 +285,7 @@ while(1):
         if (distanceToClosest < 15) and ((time.time() - begin) > 6):
             buildPackage(distanceToTape,angleXclosest,2)
             stage = 2
+        ReadfromArduino()    
         #stage = 4
         #buildPackage(0, 0, 1)
     
