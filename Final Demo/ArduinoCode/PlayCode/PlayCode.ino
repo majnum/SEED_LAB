@@ -317,6 +317,11 @@ void loop(){
            phi_des = phi_curr - 0.1; 
            CLOSE = false; 
 
+           if(abs(phi_old -PI)  <= abs(phi_curr)){
+            phi_des = phi_curr;
+            rho_s = rho; 
+           }
+
            
            break; 
 

@@ -120,6 +120,7 @@ stage = 0
 #HSV bounds for mask and finding tape
 lowerBound = (90, 100, 100)
 upperBound = (120, 255, 255)
+ninetyCounter = 0
 
 #lowerBound = (50, 50, 80)
 #upperBound = (120, 255, 255)
@@ -206,7 +207,10 @@ while(1):
                     
     #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
     distanceToNinety = -1
-    if np.count_nonzero(isNinetyComing) is not 0:
+    if np.count_nonzero(isNinetyComing) is not 0:        
+        ninetyTime = time.time() - start
+        if ninetyTime < 2:
+            continue
         ninetyComing = True                
         nonZeroNinety = imgThresh[0:height, (width-60):width].nonzero()
         avgNinety = np.mean(nonZeroNinety, axis = 1)        
@@ -214,6 +218,7 @@ while(1):
         angleYninety = (yFov / 2) * (centerToCenterYninety / imgCenterY)
         distanceToNinety = math.sin(math.radians(90 - angleYninety)) * cameraHyp / (math.sin(math.radians(angleYninety + angleCam)))
         print('distance to 90 deg turn: ', distanceToNinety)
+        ninetyCounter = ninetyCounter + 1
     else:
         angleYninetyComing = -1
         
@@ -241,11 +246,16 @@ while(1):
     nonZeroHeight, nonZeroWidth = np.shape(nonZero) 
 #    print('non zero height', nonZeroHeight)
 #    print('non zero width', nonZeroWidth)
-    if nonZeroWidth >= 15000:
+    if nonZeroWidth >= 14500 and ninetyCounter >= 4:
         crossComing = True
-        print('Cross spotted')
+        print('CROSS SPOTTED')
     else:
         crossComing = False
+#    if (imgThresh[(height-30):height, 35:40]) is not 0 and (imgThresh[(height-30):height, (width-40):(width-35)] is not 0):
+#        crossComing = True
+#        print('CROSS SPOTTED')
+#    else:
+#        crossComing = False
     
     
     ##############################################
@@ -267,7 +277,7 @@ while(1):
      
     if stage == 2:
         if (crossComing == True) and (time.time() - start > 45):
-            buildPackage(distanceToTape,angleX,9)
+            buildPackage(10,0,9)
             stage = 5
         
         if (ninetyComing == True) and (distanceToNinety < 15) and ((time.time() - start) > 20):
@@ -289,6 +299,10 @@ while(1):
        
     if stage == 3:
         print("death")
+        if (crossComing == True) and (time.time() - start > 45):
+            buildPackage(distanceToTape,angleX,9)
+            stage = 5
+            
         if (distanceToClosest < 18) and ((time.time() - begin) > 3) and (abs(angleXclosest) <= 18):
             buildPackage(distanceToTape,angleXclosest,2)
             stage = 2
@@ -305,58 +319,9 @@ while(1):
         ReadfromArduino()
         
     if stage == 5:
+        
         print("done")
-#        try:
-#            buildPackage(distanceToTape,angleX,9)
-#            ReadfromArduino()
-#            if(cameraClose):
-#                stage = 3
-#                buildPackage(22,angleX,9)
-#        except ValueError:
-#            print("nan")
-#             
-#    if stage == 3:
-#        print("done")
-#        
-##    if stage == 2:
-##        min = 300
-##        i = 0
-##        ind = 0
-##        for d in distance[1:len(distance)]:
-##           i = i + 1
-##           if d < min:
-##               min = d
-##               ind = i
-##        print(distance[ind])
-##        print(angle[ind])
-##        print(distance)
-##        print(angle)
-##        
-##        if min != 300:
-##            buildPackage(distance[ind],angle[ind],3)
-##            stage = 3
-##        else:
-##            print("didn't see any tape")
-##            stage = 5
-##    
-##    if stage == 3:
-##        print("hi")
-##        try:
-##            if(cameraClose):
-##                buildPackage(int(distanceToTape),angleX,10)
-##                stage = 4
-##            else:    
-##                buildPackage(int(distanceToTape),angleX,9)
-##        except ValueError:
-##            print("nan")
-##        print("hi")
-#        
-#        
-#    if stage == 4:
-#        print("done")
-#        
-#    if stage == 5:
-#        print("IDLE")
-#        
+        ReadfromArduino()
+    
 
 
