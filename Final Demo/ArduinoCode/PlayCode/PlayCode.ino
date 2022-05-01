@@ -333,6 +333,19 @@ void loop(){
 
       
         break;
+
+
+      case 6: //Move to Cross and Stop
+      
+        rho_s = rho + ((double) dist/12.0);
+
+        phi_des = phi_curr;
+          
+        
+
+      break; 
+        
+      
       
       default: //Data Error
 
