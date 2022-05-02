@@ -166,6 +166,7 @@ while(1):
     isStartClose = imgThresh[(height-30):height, 0:width]
     isEndClose = imgThresh[0:(height-60), 0:width]
     isNinetyComing = imgThresh[350:height, (width-60):width]
+    isNinetyComing2 = imgThresh[350:height, (width - 200):width]
     
     #flag for being close to the start of tape
     if np.count_nonzero(isStartClose) is not 0:
@@ -218,6 +219,17 @@ while(1):
         print('distance to 90 deg turn: ', distanceToNinety)        
     else:
         angleYninetyComing = -1
+        
+    if ninetyCounter >= 3 and np.count_nonzero(isNinetyComing) is not 0:
+        ninetyComing = True
+        nonZeroNinety2 = imgThresh[0:height, (width-200):width].nonzero()
+        avgNinety2 = np.mean(nonZeroNinety2, axis = 1)
+        centerToCenterYninety2 = avgNinety2[0] - imgCenterY
+        angleYninety2 = (yFov / 2) * (centerToCenterYninety / imgCenterY)
+        distanceToNinety2 = math.sin(math.radians(90 - angleYninety2)) * cameraHyp / (math.sin(math.radians(angleYninety2 + angleCam)))
+    else:
+        angleYninetyComing2 = -1
+                                              
         
     #finding end of tape
     distanceToEnd = -1
