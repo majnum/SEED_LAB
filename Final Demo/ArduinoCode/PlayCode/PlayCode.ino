@@ -106,8 +106,8 @@ int deltaTLeft = 0;
 double Kp = 22;
 double Ki = 10;
 
-double Kp_rho = 5; 
-double Ki_rho = 2.5;
+double Kp_rho = 7.5; 
+double Ki_rho = 0.5;
 
 //Angle Desired
 double phi_des = 0; 
@@ -194,7 +194,7 @@ void loop(){
 
   static int i = 0; 
   static int turnCount = 0; 
-  
+   
   
   switch(STATE){
     case 0:
@@ -205,7 +205,6 @@ void loop(){
       
     case 1:
      //Find Tape
-     Ki = 5; 
       phi_des  = phi_curr - 1.8*PI;
       
       rho_s = rho;
@@ -223,9 +222,9 @@ void loop(){
        
     case 2:
       static int oldCase2Ang = 0; 
-      Kp = 35;
-      Ki = 35;
-      
+      Ki = 19;
+      Kp = 18;
+     
       if((oldCase2Ang != ang) && (CLOSE == false)){
         Case2Once = true; 
       }
@@ -244,8 +243,10 @@ void loop(){
         rho_s = rho + ((double) dist/12.0);
         //CLOSE = true;  ---- This shouldn't be needed. Makes it so the next if statement will never run. 
       }
+
+      CLOSE = false;
       
-      if((dist  <= 12 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
+      if((dist  <=  12 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         phi_des = phi_curr;
         CLOSE = true;
 
@@ -259,20 +260,22 @@ void loop(){
            
         
       }
+      
+      phi_old = phi_curr;
 
       if(abs(rho - rho_s) < 0.05){ //TODO: Add flag for when to stop and not turn right. --- 
         if(turnCount == 0){ //Follow Tape 
-          STATE = 3;
+          //STATE = 3;
           Case3Once = true; //Resets the boolean in State Three
         }
 
         if((turnCount < 5) && (turnCount > 0)){ //Turn Right
           //STATE = 4;
-          phi_old = phi_curr;
+          
         }
 
         if(turnCount == 5) { //Stop --- Add flags Josh :)
-          STATE = 5; 
+          //STATE = 5; 
         }
         turnCount++;
       }
@@ -284,8 +287,6 @@ void loop(){
       case 3:
       //Serial.println(
       //Reorient to line up to travel along tape.
-      Kp = 22;
-      Ki = 20; 
       
       rho_s = rho;
 
@@ -299,7 +300,7 @@ void loop(){
 
       //Serial.println(int(ang));
           //Serial.println(int(abs(phi_des - phi_curr)*100)%200);
-          if((abs(phi_des - phi_curr) <= 0.03)){
+          if((abs(phi_des - phi_curr) <= 0.1)){
 
           STATE = 2;
           
@@ -314,14 +315,16 @@ void loop(){
 
       case 4: 
            //Turn 90 degrees right and then listen to the camera angle.
-           Ki = 10;
-           rho = rho_s;
-           phi_des = phi_old + 1.57; 
+           rho_s = rho + 1.5;
+           phi_des = phi_curr - 0.1; 
+           CLOSE = false; 
 
-           if( abs(phi_curr - phi_des) < 0.05){
-            STATE = 2; 
+           if(abs(phi_old -PI)  <= abs(phi_curr)){
+            phi_des = phi_curr;
+            rho_s = rho; 
            }
 
+           
            break; 
 
       case 5: //STOP MOVING!
@@ -332,6 +335,27 @@ void loop(){
 
       
         break;
+
+
+      case 6: //Move to Cross and Stop
+        Kp_rho = 13.5;
+        Ki_rho = 0;
+        if(dist > 0){
+          rho_s = rho + (dist/12.0)*1.2;
+        }
+      
+        
+
+        phi_des = r* ((rad_R) - rad_L) / b;
+
+
+        dist = 0;
+          
+        
+
+      break; 
+        
+      
       
       default: //Data Error
 
@@ -495,7 +519,9 @@ void PID_CONTROL(){
       rho_integral += rho_er;
     }
 
-    
+    if(STATE == 4){
+      rho_integral = 0; 
+    }
 
     //Serial.print("rho_curr = ");
     //Serial.println(rho);

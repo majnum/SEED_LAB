@@ -232,6 +232,8 @@ while(1):
     #if stage == 1: #xFov will be all janky for sweep state, so avoid x angle calculation
     #    angleX = -1
     
+        
+
     #calculate approximate distance to tape center
     angleCam = 13 #degrees
     cameraHyp = 6.75 + 1.3 #inches plus fudge

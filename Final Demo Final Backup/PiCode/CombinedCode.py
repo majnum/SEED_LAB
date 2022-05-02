@@ -9,7 +9,6 @@ import math
 import serial
 
 start = time.time()
-ninetyTime = start
 #Set address
 ser = serial.Serial('/dev/ttyACM0', 115200)
 #Wait for connection to complete
@@ -115,13 +114,11 @@ angle = []
 minDistance = 100000
 cameraClose = False
 endTapeClose = False
-
 stage = 0
 
 #HSV bounds for mask and finding tape
 lowerBound = (90, 100, 100)
 upperBound = (120, 255, 255)
-ninetyCounter = 0
 
 #lowerBound = (50, 50, 80)
 #upperBound = (120, 255, 255)
@@ -129,22 +126,20 @@ ninetyCounter = 0
 #main loop controlling Edgar
 while(1):
     ninetyComing = False
-    crossComing = False
     #capturing directly to an openCV object / numpy array
     img = np.empty((height * width * 3,), dtype=np.uint8)
     camera.capture(img, 'bgr')
     img = img.reshape((height, width, 3))
     img[0:130, 0:img.shape[1]] = (0, 0, 0)
-    img[0:350, (width-100):width] = (0, 0, 0)
     img2 = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    cv.imwrite('test.jpg', img)
+    
     #isolating blue
     mask = cv.inRange(img2, lowerBound, upperBound)
     imgOut = cv.bitwise_and(img, img, mask = mask)
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((6,6), np.uint8)
+    kernel = np.ones((5,5), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     
@@ -166,7 +161,6 @@ while(1):
     isStartClose = imgThresh[(height-30):height, 0:width]
     isEndClose = imgThresh[0:(height-60), 0:width]
     isNinetyComing = imgThresh[350:height, (width-60):width]
-    isNinetyComing2 = imgThresh[350:height, (width - 200):width]
     
     #flag for being close to the start of tape
     if np.count_nonzero(isStartClose) is not 0:
@@ -209,27 +203,16 @@ while(1):
                     
     #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
     distanceToNinety = -1
-    if np.count_nonzero(isNinetyComing) is not 0:        
+    if np.count_nonzero(isNinetyComing) is not 0:
         ninetyComing = True                
         nonZeroNinety = imgThresh[0:height, (width-60):width].nonzero()
         avgNinety = np.mean(nonZeroNinety, axis = 1)        
         centerToCenterYninety = avgNinety[0] - imgCenterY
         angleYninety = (yFov / 2) * (centerToCenterYninety / imgCenterY)
         distanceToNinety = math.sin(math.radians(90 - angleYninety)) * cameraHyp / (math.sin(math.radians(angleYninety + angleCam)))
-        print('distance to 90 deg turn: ', distanceToNinety)        
+        print('distance to 90 deg turn: ', distanceToNinety)
     else:
         angleYninetyComing = -1
-        
-    if ninetyCounter >= 3 and np.count_nonzero(isNinetyComing) is not 0:
-        ninetyComing = True
-        nonZeroNinety2 = imgThresh[0:height, (width-200):width].nonzero()
-        avgNinety2 = np.mean(nonZeroNinety2, axis = 1)
-        centerToCenterYninety2 = avgNinety2[0] - imgCenterY
-        angleYninety2 = (yFov / 2) * (centerToCenterYninety / imgCenterY)
-        distanceToNinety2 = math.sin(math.radians(90 - angleYninety2)) * cameraHyp / (math.sin(math.radians(angleYninety2 + angleCam)))
-    else:
-        angleYninetyComing2 = -1
-                                              
         
     #finding end of tape
     distanceToEnd = -1
@@ -255,17 +238,11 @@ while(1):
     nonZeroHeight, nonZeroWidth = np.shape(nonZero) 
 #    print('non zero height', nonZeroHeight)
 #    print('non zero width', nonZeroWidth)
-    print('ninety counter', ninetyCounter)
-    if nonZeroWidth >= 14000 and ninetyCounter >= 4:
+    if nonZeroWidth >= 15000:
         crossComing = True
-        print('CROSS SPOTTED')
+        print('Cross spotted')
     else:
         crossComing = False
-#    if (imgThresh[(height-30):height, 35:40]) is not 0 and (imgThresh[(height-30):height, (width-40):(width-35)] is not 0):
-#        crossComing = True
-#        print('CROSS SPOTTED')
-#    else:
-#        crossComing = False
     
     
     ##############################################
@@ -286,10 +263,6 @@ while(1):
              #ReadfromArduino()
      
     if stage == 2:
-        if (crossComing == True) and (time.time() - start > 45) and (ninetyCounter >= 4):
-            buildPackage(10,angleX,6)
-            stage = 5
-        
         if (ninetyComing == True) and (distanceToNinety < 15) and ((time.time() - start) > 20):
             buildPackage(0,0,4)
             stage = 3
@@ -309,15 +282,9 @@ while(1):
        
     if stage == 3:
         print("death")
-        if (crossComing == True) and (time.time() - start > 45):
-            buildPackage(10,angleX,6)
-            stage = 5
-            
-        if (distanceToClosest < 18) and ((time.time() - begin) > 3) and (abs(angleXclosest) <= 18):
+        if (distanceToClosest < 15) and ((time.time() - begin) > 6):
             buildPackage(distanceToTape,angleXclosest,2)
-            ninetyCounter = ninetyCounter + 1
             stage = 2
-        ReadfromArduino()    
         #stage = 4
         #buildPackage(0, 0, 1)
     
@@ -328,11 +295,57 @@ while(1):
              buildPackage(distanceToClosest,angleXclosest,3)
         
         ReadfromArduino()
-        
-    if stage == 5:
-        
-        print("done")
-        ReadfromArduino()
-    
+#        try:
+#            buildPackage(distanceToTape,angleX,9)
+#            ReadfromArduino()
+#            if(cameraClose):
+#                stage = 3
+#                buildPackage(22,angleX,9)
+#        except ValueError:
+#            print("nan")
+#             
+#    if stage == 3:
+#        print("done")
+#        
+##    if stage == 2:
+##        min = 300
+##        i = 0
+##        ind = 0
+##        for d in distance[1:len(distance)]:
+##           i = i + 1
+##           if d < min:
+##               min = d
+##               ind = i
+##        print(distance[ind])
+##        print(angle[ind])
+##        print(distance)
+##        print(angle)
+##        
+##        if min != 300:
+##            buildPackage(distance[ind],angle[ind],3)
+##            stage = 3
+##        else:
+##            print("didn't see any tape")
+##            stage = 5
+##    
+##    if stage == 3:
+##        print("hi")
+##        try:
+##            if(cameraClose):
+##                buildPackage(int(distanceToTape),angleX,10)
+##                stage = 4
+##            else:    
+##                buildPackage(int(distanceToTape),angleX,9)
+##        except ValueError:
+##            print("nan")
+##        print("hi")
+#        
+#        
+#    if stage == 4:
+#        print("done")
+#        
+#    if stage == 5:
+#        print("IDLE")
+#        
 
 
