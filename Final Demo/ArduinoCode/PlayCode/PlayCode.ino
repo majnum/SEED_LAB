@@ -341,7 +341,7 @@ void loop(){
         Kp_rho = 13.5;
         Ki_rho = 0;
         if(dist > 0){
-          rho_s = rho + 0.8 + dist/12.0;
+          rho_s = rho + (dist/12.0)*1.2;
         }
       
         

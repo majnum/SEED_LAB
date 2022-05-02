@@ -144,7 +144,7 @@ while(1):
     
     #img filtering
     blur = cv.GaussianBlur(imgOut, (3,3), 0)
-    kernel = np.ones((5,5), np.uint8)
+    kernel = np.ones((6,6), np.uint8)
     opening = cv.morphologyEx(blur, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
     
