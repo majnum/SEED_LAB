@@ -5,7 +5,7 @@
 % controller. This controller has been tuned to have a rise time of under 1
 % second and to have less than 10% overshoot
 %
-% Required File: RunDemoOuterControl.slx
+% Required File: RunFinalDemoOuterControl.slx
 %
 %% Define Motor Paramters
 Ra=1;  % armaature resistance [Ohms]
@@ -22,16 +22,16 @@ sigma = 3.3;
 %
 % This simulation applies a PI controller to the transfer function found in
 % RunFeedbackControl and the PI can be tuned to lower the overshoot
-%
+% RunFinalDemoOuterControl is the file we needed to use.
 %
 % Open the block diagram so it appears in the documentation when published.
 % Make sure the block diagram is closed before running the publish function
 %
-open_system('RunDemo2OuterControl')
+open_system('RunFinalDemoOuterControl')
 %
 % run the simulation
 %
-out=sim('RunDemo2OuterControl');
+out=sim('RunFinalDemoOuterControl');
 
 %% Plot the results 
 
