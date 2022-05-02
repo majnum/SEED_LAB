@@ -243,6 +243,8 @@ void loop(){
         rho_s = rho + ((double) dist/12.0);
         //CLOSE = true;  ---- This shouldn't be needed. Makes it so the next if statement will never run. 
       }
+
+      CLOSE = false;
       
       if((dist  <=  12 ) && (dist > 0) && (CLOSE == false)){// TODO Change based on where camera loses sight. Runs once to set setpoint.         
         phi_des = phi_curr;
@@ -336,10 +338,18 @@ void loop(){
 
 
       case 6: //Move to Cross and Stop
+        Kp_rho = 13.5;
+        Ki_rho = 0;
+        if(dist > 0){
+          rho_s = rho + 0.8 + dist/12.0;
+        }
       
-        rho_s = rho + ((double) dist/12.0);
+        
 
-        phi_des = phi_curr;
+        phi_des = r* ((rad_R) - rad_L) / b;
+
+
+        dist = 0;
           
         
 

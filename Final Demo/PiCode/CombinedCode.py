@@ -9,6 +9,7 @@ import math
 import serial
 
 start = time.time()
+ninetyTime = start
 #Set address
 ser = serial.Serial('/dev/ttyACM0', 115200)
 #Wait for connection to complete
@@ -208,17 +209,13 @@ while(1):
     #flag for 90 degree right turn coming up and calculating distance to that 90 degree turn
     distanceToNinety = -1
     if np.count_nonzero(isNinetyComing) is not 0:        
-        ninetyTime = time.time() - start
-        if ninetyTime < 2:
-            continue
         ninetyComing = True                
         nonZeroNinety = imgThresh[0:height, (width-60):width].nonzero()
         avgNinety = np.mean(nonZeroNinety, axis = 1)        
         centerToCenterYninety = avgNinety[0] - imgCenterY
         angleYninety = (yFov / 2) * (centerToCenterYninety / imgCenterY)
         distanceToNinety = math.sin(math.radians(90 - angleYninety)) * cameraHyp / (math.sin(math.radians(angleYninety + angleCam)))
-        print('distance to 90 deg turn: ', distanceToNinety)
-        ninetyCounter = ninetyCounter + 1
+        print('distance to 90 deg turn: ', distanceToNinety)        
     else:
         angleYninetyComing = -1
         
@@ -246,7 +243,8 @@ while(1):
     nonZeroHeight, nonZeroWidth = np.shape(nonZero) 
 #    print('non zero height', nonZeroHeight)
 #    print('non zero width', nonZeroWidth)
-    if nonZeroWidth >= 14500 and ninetyCounter >= 4:
+    print('ninety counter', ninetyCounter)
+    if nonZeroWidth >= 14000 and ninetyCounter >= 4:
         crossComing = True
         print('CROSS SPOTTED')
     else:
@@ -276,8 +274,8 @@ while(1):
              #ReadfromArduino()
      
     if stage == 2:
-        if (crossComing == True) and (time.time() - start > 45):
-            buildPackage(10,0,9)
+        if (crossComing == True) and (time.time() - start > 45) and (ninetyCounter >= 4):
+            buildPackage(10,angleX,6)
             stage = 5
         
         if (ninetyComing == True) and (distanceToNinety < 15) and ((time.time() - start) > 20):
@@ -300,11 +298,12 @@ while(1):
     if stage == 3:
         print("death")
         if (crossComing == True) and (time.time() - start > 45):
-            buildPackage(distanceToTape,angleX,9)
+            buildPackage(10,angleX,6)
             stage = 5
             
         if (distanceToClosest < 18) and ((time.time() - begin) > 3) and (abs(angleXclosest) <= 18):
             buildPackage(distanceToTape,angleXclosest,2)
+            ninetyCounter = ninetyCounter + 1
             stage = 2
         ReadfromArduino()    
         #stage = 4
